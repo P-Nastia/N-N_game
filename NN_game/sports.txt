@@ -1,0 +1,20 @@
+football
+The worlds most popular team sport. The major governing body is FIFA, currently present in over 200 countries worldwide with international competitions.
+basketball
+The game is generally played by two five-player sides that pass the ball around to score baskets within predetermined hoops. 
+volleyball
+Requires two sides of six players to hit a larger ball across the net suspended within an indoor court.
+golf
+This involves a set of clubs and balls with professional players aiming to hit the ball in fewer shots across an expansive field or course.
+badminton
+Is a racquet sport played using racquets to hit a shuttlecock across a net.
+hockey
+Is a team sport played on ice skates, usually on an ice skating rink with lines and markings specific to the sport.
+parkour
+Is an athletic training discipline or sport in which practitioners attempt to get from point A to point B in the fastest and most efficient way possible.
+bobsleigh
+A sport in which you race down a track covered in ice in a small vehicle with long metal blades under it
+kayaking
+Is a fun activity that involves moving through water in a small water vessel with the aid of a double-bladed paddle.
+archery
+Is the sport that involves using a bow to shoot arrows.

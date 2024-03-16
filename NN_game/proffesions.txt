@@ -1,0 +1,20 @@
+accountant
+A person that works with the money and accounts of a company.
+actor 
+A person that acts in a play or a movie.
+electrician
+A person that works with electric circuits.
+florist 
+A person that works with flowers.
+mechanic 
+A person that repairs machines, especially car motors.
+scientist 
+A person that works in the science industry. They do many experiments.
+waiter
+A person that works in a food outlet, looking after customers and serving food.
+soldier 
+A person who works for the army.
+plumber
+A person that repairs your water systems or pipes.
+postman
+A person that delivers mail to your house.
