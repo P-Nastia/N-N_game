@@ -1,7 +1,7 @@
 #include "Hangman.h"
 
 Hangman::Hangman(string fileNameToOpen) :loseCounter{ 0 }, selectedLetter{ 0 }, fileNameToOpen{ fileNameToOpen } {
-    bgTexture.loadFromFile("HangMan/bgForHangmanGame.jpg");
+    bgTexture.loadFromFile("HangMan/bgForHM.jpg");
     bgSprite.setTexture(bgTexture);
     hangerBase.loadFromFile("HangMan/hangmanBase.png");
     hangerBaseSprite.setTexture(hangerBase);
@@ -21,12 +21,7 @@ Hangman::Hangman(string fileNameToOpen) :loseCounter{ 0 }, selectedLetter{ 0 }, 
     }
     string str = setWordToGuess();
     wordLength = str.length();
-    wordToGuess = new char[wordLength];
-    for (int i = wordLength - 1; i >= 0; i--) {
-        wordToGuess[i] = str.back();
-        str.pop_back();
-    }
-    wordToGuess[wordLength] = 0;
+    wordToGuess = str;
     cout << "wordToGuess: " << wordToGuess << endl;
     hiddenWordToGuess = new char[wordLength];
     for (int i = 0; i < wordLength; i++) {
@@ -78,9 +73,9 @@ string Hangman::setWordToGuess() {
 
 void Hangman::setHiddenWord(char hiddenWordToGuess, int index, int xPos) {
     this->separatedLettersOfWord[index].setFont(font);
-    this->separatedLettersOfWord[index].setFillColor(Color(50, 197, 233));
+    this->separatedLettersOfWord[index].setFillColor(Color::Black);
     this->separatedLettersOfWord[index].setCharacterSize(80);
-    this->separatedLettersOfWord[index].setPosition(xPos, 800);
+    this->separatedLettersOfWord[index].setPosition(xPos, 880);
     this->separatedLettersOfWord[index].setString(hiddenWordToGuess);
     this->separatedLettersOfWord[index].setOutlineColor(Color::White);
 }
@@ -116,7 +111,7 @@ void Hangman::setHangmanBodyPart(string fileName) {
 bool Hangman::wordCompleted() {
     if (loseCounter < 6) {
         for (int i = 0; i < wordLength; i++) {
-            if (wordToGuess[i] == '_') {
+            if (hiddenWordToGuess[i] == '_') {
                 return false;
             }
         }
@@ -155,22 +150,33 @@ void Hangman::startGame() {
                     }
 
                 }
+                if (event_opt.key.code == Keyboard::Add)
+                    music.VolumeUp();
+                if (event_opt.key.code == Keyboard::Subtract)
+                    music.VolumeDown();
+                if (event_opt.key.code == Keyboard::Space)
+                    startGame();
             }
         }
         hangmanWindow.clear();
         hangmanWindow.draw(bgSprite);
         hangmanWindow.draw(hangerBaseSprite);
+
         switch (loseCounter) {
         case 1: {setHangmanBodyPart("HangMan/1.png"); }; break;
         case 2: {setHangmanBodyPart("HangMan/2.png"); }; break;
         case 3: {setHangmanBodyPart("HangMan/3.png"); }; break;
         case 4: {setHangmanBodyPart("HangMan/4.png"); }; break;
         case 5: {setHangmanBodyPart("HangMan/5.png"); }; break;
-        case 6: {setHangmanBodyPart("HangMan/6.png"); gameText text("You lost. Correct word was ",
-            "Fonts/LeagueSpartan-Bold.ttf"); gameText word(wordToGuess, "Fonts/LeagueSpartan-Bold.ttf");
-            text.showString(hangmanWindow, 100, 450); word.showString(hangmanWindow, 100, 530); }; break;
+        case 6: {setHangmanBodyPart("HangMan/6.png"); gameText text("You lost. Correct word was " + wordToGuess,
+            "Fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
+            text.showString(hangmanWindow, 100, 450); }; break;
         }
-
+        if (wordCompleted() == true && loseCounter < 6) {
+            gameText text("You won. \nPress 'Escape' to exit, \n'Space' to continue playing",
+                "Fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
+            text.showString(hangmanWindow, 100, 450);
+        }
         hangmanWindow.draw(hangmanSprite);
         showAlhpabet();
         showHiddenWord();
