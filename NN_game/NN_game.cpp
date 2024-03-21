@@ -336,7 +336,7 @@ void hangmanMenu(RenderWindow& hangmanMenu, int width, int height) {
 }
 
 int checkersMenu(RenderWindow& window, int width, int height) {
-
+    
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
     windowTexture.loadFromFile("Texture/fonMenu.jpg");
@@ -379,7 +379,7 @@ int checkersMenu(RenderWindow& window, int width, int height) {
     return 0;
 }
 
-int startCheckers(RenderWindow& window, int width, int height) {
+int startCheckers(RenderWindow& Window, int width, int height) {
     ContextSettings settings;
     settings.antialiasingLevel = 16.0;
     Event event;
@@ -390,7 +390,8 @@ int startCheckers(RenderWindow& window, int width, int height) {
     bool selected = false;
     Piece* SelectedPiece = NULL;
     int turn = 1;
-
+    VideoMode desktop = VideoMode::getDesktopMode();
+    RenderWindow window(desktop,"Checkers",Style::Fullscreen);
     for (int i = 0; i < 12; i++) {
         WhitePieces[i].color = Color::White;
         RedPieces[i].color = Color::Red;
@@ -401,7 +402,8 @@ int startCheckers(RenderWindow& window, int width, int height) {
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) {
-                checkersMenu(window, width, height);
+                window.close();
+                checkersMenu(Window, width, height);
             }
             if (event.type == Event::MouseButtonReleased) {
                 if (event.mouseButton.button == Mouse::Left) {
@@ -410,7 +412,8 @@ int startCheckers(RenderWindow& window, int width, int height) {
             }
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            checkersMenu(window, width, height);
+            window.close();
+            checkersMenu(Window, width, height);
         }
         window.clear();
 
