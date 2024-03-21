@@ -110,11 +110,12 @@ bool BattleShip::checkForCompleteness(int x, int y)
 	}
 	if (fullField[y][x] == '3') {//якщо корабель на 3 клітинки
 		cout << "3" << endl;
-		if (whichShip == false) {
+		if (whichShip == false && firstShipFor3.empty() == true) {
 			if (firstShipFor3.empty() == true)
 				return true;
 			else
 				return false;
+			return true;
 		}
 		else {
 			if (secondShipFor3.empty() == true)
@@ -158,91 +159,30 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 	}
 	//якщо корабель на 3 клітинки, видаляємо рядок з мапи з цими координатами
 	else if (fullField[y][x] == '3') {
-		bool foundinFirst = false;//чи координати належать першому кораблеві
-		if (fullField[y + 1][x] == '3' || fullField[y - 1][x] == '3') {//якщо корабель розташований горизонтально
-			if (isFirstHorizontal == false && isSecondHorizontal == true) {
-				secondShipFor3.erase(x);
-				whichShip = true;
-			}
-			else if (isFirstHorizontal == true && isSecondHorizontal == false) {
-				firstShipFor3.erase(y);
+		if (firstShipFor3.empty() == false) {
+			auto it1 = find_if(//лямбда, щоб видалити пару з multimap
+				firstShipFor3.begin(), firstShipFor3.end(), [&](const auto& pair) {
+					return pair.first == y
+					&& pair.second == x;
+				});
+			if (it1 != firstShipFor3.end()) {
 				whichShip = false;
-			}
-			else if (isFirstHorizontal == true && isSecondHorizontal == true) {
-				auto i1 = firstShipFor3.begin();
-				auto i2 = secondShipFor3.begin();
-				if (i1->second == x && i2->second != x) {
-					firstShipFor3.erase(y);
-					whichShip = false;
-				}
-				else if (i2->second == x && i1->second != x) {
-					secondShipFor3.erase(y);
-					whichShip = true;
-				}
-				else {
-					auto i_2 = firstShipFor3.find(y);
-					if (i_2 != firstShipFor3.end()) {
-						firstShipFor3.erase(y);
-						whichShip = false;
-					}
-					else {
-						secondShipFor3.erase(y);
-						whichShip = true;
-					}
-				}
+				firstShipFor3.erase(it1);
 			}
 		}
 		else {
-			auto i1 = firstShipFor3.begin();
-			auto i2 = secondShipFor3.begin();
-			if (i1->first == y && i2->first != y) {
-				whichShip = false;
-				for (auto i = firstShipFor3.begin(); i != firstShipFor3.end();) {//якщо корабель розташований вертикально 
-					if (i->second == x) {
-						i = firstShipFor3.erase(i);
-						break;
-					}
-					else
-						++i;
-				}
+			whichShip = true;
+			auto it2 = find_if(
+				secondShipFor3.begin(), secondShipFor3.end(), [&](const auto& pair) {
+					return pair.first == y
+					&& pair.second == x;
+				});
+			if (it2 != secondShipFor3.end()) {
+				secondShipFor3.erase(it2);
 			}
-			else if (i2->first == y && i1->first != y) {
-				whichShip = true;
-				for (auto i = secondShipFor3.begin(); i != secondShipFor3.end();) {//якщо корабель розташований вертикально 
-					if (i->second == x) {
-						i = secondShipFor3.erase(i);
-						break;
-					}
-					else
-						++i;
-				}
-			}
-			else {
-				auto i1_second = firstShipFor3.rbegin();//останній елемент 
-				if (i1->second <= x && i1_second->second >= x) {
-					whichShip = false;
-					for (auto i = firstShipFor3.begin(); i != firstShipFor3.end();) {//якщо корабель розташований вертикально 
-						if (i->second == x) {
-							i = firstShipFor3.erase(i);
-							break;
-						}
-						else
-							++i;
-					}
-				}
-				else {
-					whichShip = true;
-					for (auto i = secondShipFor3.begin(); i != secondShipFor3.end();) {//якщо корабель розташований вертикально 
-						if (i->second == x) {
-							i = secondShipFor3.erase(i);
-							break;
-						}
-						else
-							++i;
-					}
-				}
-			}
+
 		}
+		cout << "FirstShip " << endl << endl;
 		for (auto i : firstShipFor3) {
 			cout << i.first << ":" << i.second << endl;
 		}
@@ -251,7 +191,6 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 			cout << i.first << ":" << i.second << endl;
 		}
 	}
-
 	if (fullField[y][x] == '-') {
 		playingField[y][x] = '0';//мимо корабля
 		cellTexture[y][x].loadFromFile("battleship/loseSquare.png");
@@ -266,7 +205,6 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 		showField(window);
 		return true;
 	}
-
 }
 
 BattleShip::BattleShip(string whoseField) {
@@ -299,22 +237,21 @@ BattleShip::BattleShip(string whoseField) {
 				cellSprite[i][j].setTexture(cellTexture[i][j]);
 				cellSprite[i][j].setScale(Vector2f(0.2, 0.2));
 				cellSprite[i][j].setPosition(Vector2f(xPos, yPos));
-
 			}
 		}
 	}
 	myTurn = true;
-	shotsVector.resize(11);
+	shotsVector.resize(10);
 	for (int i = 0; i < shotsVector.size(); i++) {
-		shotsVector[i].resize(11, i);
-		for (int j = 0; j < shotsVector.size(); j++) {
+		shotsVector[i].resize(10, i);
+		for (int j = 0; j < 10; j++) {
 			shotsVector[i][j] = 'f';//заповнюються всі значення false, бо ще не було хода
 		}
 	}
-	playingField.resize(11);
+	playingField.resize(10);
 	for (int i = 0; i < playingField.size(); i++) {
-		playingField[i].resize(11, i);
-		for (int j = 0; j < playingField.size(); j++) {
+		playingField[i].resize(10, i);
+		for (int j = 0; j < 10; j++) {
 			playingField[i][j] = '-';//заповнюються всі значення '-', бо ще не було хода
 		}
 	}
@@ -325,18 +262,7 @@ BattleShip::BattleShip(string whoseField) {
 		}
 	}
 	loadShipFor3();//завантаження координат кораблів на 3 клітинки
-	/*for (auto i : shipFor4) {
-		cout << i.first << ":" << i.second << endl;
-	}
-	cout << endl;
-	for (auto i : firstShipFor3) {
-		cout << i.first << ":" << i.second << endl;
-	}
-	cout << endl;
-	for (auto i : secondShipFor3) {
-		cout << i.first << ":" << i.second << endl;
-	}
-	cout << endl;*/
+
 }
 
 void BattleShip::showCoords(RenderWindow& window)
@@ -383,7 +309,6 @@ void BattleShip::loadShipFor3()
 			}
 		}
 	}
-
 }
 
 void BattleShip::loadField(string whoseField) {
@@ -395,11 +320,11 @@ void BattleShip::loadField(string whoseField) {
 	else
 		loadForPlayer(num);
 	char var;
-	fullField.resize(11);
+	fullField.resize(10);
 	mapFile.open(fileName);
 	if (mapFile.is_open()) {
 		for (int i = 0; i < fullField.size(); i++) {
-			fullField[i].resize(11, i);
+			fullField[i].resize(10, i);
 			for (int j = 0; j < 10; j++) {
 				mapFile >> fullField[i][j];
 			}
