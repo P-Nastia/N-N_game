@@ -27,7 +27,7 @@ private:
     Color CorrectLetter = Color(39, 183, 53);
     Font font;//шрифт
     Text guessingLine;//опис слова, яке потрібно відгадати
-    char* wordToGuess;//саме слово, яке потрібно вгадати
+    string wordToGuess;//саме слово, яке потрібно вгадати
     char* hiddenWordToGuess;//лише невідгадані символи "_" на екрані, які сетяться в separatedLettersOfWord
     Text* separatedLettersOfWord;//символи "_" на екрані
     char alphabetLetters[26] = { 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z' };
