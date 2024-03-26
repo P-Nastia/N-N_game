@@ -11,49 +11,49 @@ void BattleShip::showField(RenderWindow& window) {
 bool BattleShip::checkForCompleteness(int x, int y)
 {
 	bool wasCompleted = true;
-	if (fullField[y][x] == '1')
+	if (fullField.at(y).at(x) == '1')
 		return true;
-	if (fullField[y][x] == '2') {//якщо це корабель на 2 клітинки
+	if (fullField.at(y).at(x) == '2') {//якщо це корабель на 2 клітинки
 		if (x == 0 && y == 0) {//лівий верхній кут
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
-			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
+			if (playingField.at(y + 1).at(x) == '-' && fullField.at(y + 1).at(x) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x == 9 && y == 9) {//правий нижній кут
-			if (playingField[y][x - 1] == '-' && fullField[y][x - 1] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField.at(y).at(x - 1) != '-')
 				wasCompleted = false;
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x == 0 && y == 9) {//лівий нижній кут
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x == 9 && y == 0) {//правий верхній кут
-			if (playingField[y][x - 1] == '-' && fullField[y][x - 1] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField.at(y).at(x - 1) != '-')
 				wasCompleted = false;
-			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
+			if (playingField.at(y + 1).at(x) == '-' && fullField.at(y + 1).at(x) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x < 9 && y == 0) {//якщо це верхня лінія
-			if (playingField[y][x - 1] == '-' && fullField[y][x - 1] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField.at(y).at(x - 1) != '-')
 				wasCompleted = false;
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
 			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
 				wasCompleted = false;
@@ -62,22 +62,22 @@ bool BattleShip::checkForCompleteness(int x, int y)
 			return false;
 		}
 		else if (x < 9 && y == 9) {//якщо це нижня лінія
-			if (playingField[y][x - 1] == '-' && fullField[y][x - 1] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField.at(y).at(x - 1) != '-')
 				wasCompleted = false;
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x == 0 && y < 9) {//якщо це ліва крайня лінія
-			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
+			if (playingField.at(y + 1).at(x) == '-' && fullField.at(y + 1).at(x) != '-')
 				wasCompleted = false;
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
@@ -86,22 +86,22 @@ bool BattleShip::checkForCompleteness(int x, int y)
 		else if (x == 9 && y < 9) {//якщо це права крайня лінія
 			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
 				wasCompleted = false;
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
-			if (playingField[y][x - 1] == '-' && fullField[y][x - 1] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField[y][x - 1] != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
 			return false;
 		}
 		else if (x < 9 && y < 9) {//якщо координати в середині
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y).at(x - 1) == '-' && fullField.at(y).at(x - 1) != '-')
 				wasCompleted = false;
-			if (playingField[y][x + 1] == '-' && fullField[y][x + 1] != '-')
+			if (playingField.at(y).at(x + 1) == '-' && fullField.at(y).at(x + 1) != '-')
 				wasCompleted = false;
-			if (playingField[y + 1][x] == '-' && fullField[y + 1][x] != '-')
+			if (playingField.at(y + 1).at(x) == '-' && fullField.at(y + 1).at(x) != '-')
 				wasCompleted = false;
-			if (playingField[y - 1][x] == '-' && fullField[y - 1][x] != '-')
+			if (playingField.at(y - 1).at(x) == '-' && fullField.at(y - 1).at(x) != '-')
 				wasCompleted = false;
 			if (wasCompleted != false)
 				return true;
@@ -135,21 +135,15 @@ bool BattleShip::checkForCompleteness(int x, int y)
 }
 
 bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
-
-	shotsVector[x][y] = 't';//сетиться, що комірка занята
-	//якщо корабель на 4 клітинки, видаляємо рядок з мапи з цими координатами
-	if (fullField[y][x] == '4') {
-		if (fullField[y + 1][x] == '4' || fullField[y - 1][x] == '4')//якщо корабель розташований горизонтально
-			shipFor4.erase(y);
-		else {
-			for (auto i = shipFor4.begin(); i != shipFor4.end();) {//якщо корабель розташований вертикально 
-				if (i->second == x) {
-					i = shipFor4.erase(i);
-					break;
-				}
-				else
-					++i;
-			}
+	shotsVector.at(y).at(x) = 't';
+	if (fullField.at(y).at(x) == '4') {
+		auto it = find_if(//лямбда, щоб видалити пару з multimap
+			shipFor4.begin(), shipFor4.end(), [&](const auto& pair) {
+				return pair.first == y
+				&& pair.second == x;
+			});
+		if (it != shipFor4.end()) {
+			shipFor4.erase(it);
 		}
 		cout << "shipFor4" << endl;
 		for (auto i : shipFor4) {
@@ -157,8 +151,9 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 		}
 		cout << endl;
 	}
+
 	//якщо корабель на 3 клітинки, видаляємо рядок з мапи з цими координатами
-	else if (fullField[y][x] == '3') {
+	else if (fullField.at(y).at(x) == '3') {
 		if (firstShipFor3.empty() == false) {
 			auto it1 = find_if(//лямбда, щоб видалити пару з multimap
 				firstShipFor3.begin(), firstShipFor3.end(), [&](const auto& pair) {
@@ -191,17 +186,17 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 			cout << i.first << ":" << i.second << endl;
 		}
 	}
-	if (fullField[y][x] == '-') {
-		playingField[y][x] = '0';//мимо корабля
-		cellTexture[y][x].loadFromFile("battleship/loseSquare.png");
-		cellSprite[y][x].setTexture(cellTexture[y][x]);
+	if (fullField.at(y).at(x) == '-') {
+		playingField.at(y).at(x) = '0';//мимо корабля
+		cellTexture.at(y).at(x).loadFromFile("battleship/loseSquare.png");
+		cellSprite.at(y).at(x).setTexture(cellTexture.at(y).at(x));
 		showField(window);
 		return false;
 	}
 	else {
-		playingField[y][x] = 'x';//попало в корабель
-		cellTexture[y][x].loadFromFile("battleship/inPointSquare.png");
-		cellSprite[y][x].setTexture(cellTexture[y][x]);
+		playingField.at(y).at(x) = 'x';//попало в корабель
+		cellTexture.at(y).at(x).loadFromFile("battleship/inPointSquare.png");
+		cellSprite.at(y).at(x).setTexture(cellTexture.at(y).at(x));
 		showField(window);
 		return true;
 	}
@@ -215,49 +210,59 @@ BattleShip::BattleShip(string whoseField) {
 		loadEnemyCoords();
 	loadField(whoseField);
 	//встановлюємо розміщення клітинок
+	cellTexture.resize(10);
+	cellSprite.resize(10);
+	for (int i = 0; i < 10; i++) {
+		cellTexture[i].resize(10);
+		cellSprite[i].resize(10);
+	}
 	if (whoseField == "enemy") {
-
 		for (int i = 0, yPos = 232; i < 10; i++, yPos += 58) {
 			for (int j = 0, xPos = 1044; j < 10; j++, xPos += 58) {//більше до правого краю екрану
-				cellTexture[i][j].loadFromFile("battleship/emptySquare.png");
-				cellSprite[i][j].setTexture(cellTexture[i][j]);
-				cellSprite[i][j].setScale(Vector2f(0.2, 0.2));
-				cellSprite[i][j].setPosition(Vector2f(xPos, yPos));
+				cellTexture.at(i).at(j).loadFromFile("battleship/emptySquare.png");
+				cellSprite.at(i).at(j).setTexture(cellTexture.at(i).at(j));
+				cellSprite.at(i).at(j).setScale(Vector2f(0.2, 0.2));
+				cellSprite.at(i).at(j).setPosition(Vector2f(xPos, yPos));
 			}
 		}
 	}
+
 	else {
 		for (int i = 0, yPos = 232; i < 10; i++, yPos += 58) {
 			for (int j = 0, xPos = 232; j < 10; j++, xPos += 58) {//більше до лівого краю екрану
-				if (fullField[i][j] != '-')
-					cellTexture[i][j].loadFromFile("battleship/shipSquare.png");
-				else {
-					cellTexture[i][j].loadFromFile("battleship/emptySquare.png");
+				if (fullField.at(i).at(j) == '-') {
+					cellTexture.at(i).at(j).loadFromFile("battleship/emptySquare.png");
 				}
-				cellSprite[i][j].setTexture(cellTexture[i][j]);
-				cellSprite[i][j].setScale(Vector2f(0.2, 0.2));
-				cellSprite[i][j].setPosition(Vector2f(xPos, yPos));
+				else
+					cellTexture.at(i).at(j).loadFromFile("battleship/shipSquare.png");
+				cellSprite.at(i).at(j).setTexture(cellTexture.at(i).at(j));
+				cellSprite.at(i).at(j).setScale(Vector2f(0.2, 0.2));
+				cellSprite.at(i).at(j).setPosition(Vector2f(xPos, yPos));
 			}
 		}
 	}
 	myTurn = true;
 	shotsVector.resize(10);
 	for (int i = 0; i < shotsVector.size(); i++) {
-		shotsVector[i].resize(10, i);
+		shotsVector.at(i).resize(10);
+	}
+	for (int i = 0; i < shotsVector.size(); i++) {
 		for (int j = 0; j < 10; j++) {
-			shotsVector[i][j] = 'f';//заповнюються всі значення false, бо ще не було хода
+			shotsVector.at(i).at(j) = 'f';//заповнюються всі значення false, бо ще не було хода
 		}
 	}
 	playingField.resize(10);
-	for (int i = 0; i < playingField.size(); i++) {
-		playingField[i].resize(10, i);
+	for (int i = 0; i < 10; i++) {
+		playingField.at(i).resize(10);
+	}
+	for (int i = 0; i < 10; i++) {
 		for (int j = 0; j < 10; j++) {
-			playingField[i][j] = '-';//заповнюються всі значення '-', бо ще не було хода
+			playingField.at(i).at(j) = '-';//заповнюються всі значення '-', бо ще не було хода
 		}
 	}
 	for (int x = 0; x < 10; x++) {
 		for (int y = 0; y < 10; y++) {
-			if (fullField[x][y] == '4')
+			if (fullField.at(x).at(y) == '4')
 				shipFor4.emplace(x, y);//вставляються координати корабля на 4 клітинки
 		}
 	}
@@ -313,7 +318,7 @@ void BattleShip::loadShipFor3()
 
 void BattleShip::loadField(string whoseField) {
 	srand(time(NULL));
-	int num = 1 + rand() % 11;
+	int num = 1 + rand() % 10;
 	cout << "num = " << num << endl;
 	if (whoseField == "enemy")
 		loadForEnemy(num);
@@ -321,12 +326,14 @@ void BattleShip::loadField(string whoseField) {
 		loadForPlayer(num);
 	char var;
 	fullField.resize(10);
+	for (int i = 0; i < 10; i++) {
+		fullField.at(i).resize(10);
+	}
 	mapFile.open(fileName);
 	if (mapFile.is_open()) {
-		for (int i = 0; i < fullField.size(); i++) {
-			fullField[i].resize(10, i);
+		for (int i = 0; i < 10; i++) {
 			for (int j = 0; j < 10; j++) {
-				mapFile >> fullField[i][j];
+				mapFile >> fullField.at(i).at(j);
 			}
 		}
 	}
@@ -490,20 +497,27 @@ void BattleShip::loadForEnemy(int num) {//номер назви файлу для суперника
 
 BattleShip::~BattleShip() {
 	{
-		for (int i = 0; i < 10; i++) {
-			/*shotsVector[i].erase(shotsVector[i].begin(), shotsVector[i].end());
-			fullField[i].erase(fullField[i].begin(), fullField[i].end());
-			playingField[i].erase(playingField[i].begin(), playingField[i].end());*/
+		for (int i = 0; i < shotsVector.size(); i++) {
 			shotsVector[i].clear();
+		}
+		for (int i = 0; i < fullField.size(); i++) {
 			fullField[i].clear();
+		}
+		for (int i = 0; i < playingField.size(); i++) {
 			playingField[i].clear();
 		}
-		/*shotsVector.erase(shotsVector.begin(), shotsVector.end());
-		fullField.erase(fullField.begin(), fullField.end());
-		playingField.erase(playingField.begin(), playingField.end());*/
+		for (int i = 0; i < cellTexture.size(); i++) {
+			cellTexture[i].clear();
+		}
+		for (int i = 0; i < cellSprite.size(); i++) {
+			cellSprite[i].clear();
+		}
+
 		shotsVector.clear();
 		fullField.clear();
 		playingField.clear();
+		cellTexture.clear();
+		cellSprite.clear();
 		firstShipFor3.erase(firstShipFor3.begin(), firstShipFor3.end());
 		secondShipFor3.erase(secondShipFor3.begin(), secondShipFor3.end());
 		shipFor4.erase(shipFor4.begin(), shipFor4.end());

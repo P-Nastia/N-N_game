@@ -6,6 +6,7 @@
 #include <ctime>
 #include <Windows.h>
 #include <map>
+#include <io.h>
 using namespace std;
 using namespace sf;
 #include "Hangman.h"
@@ -34,8 +35,21 @@ void startBattleship(RenderWindow& window, int width, int height);
 int checkersMenu(RenderWindow& window, int width, int height);
 int startCheckers(RenderWindow& window, int width, int height);
 
+auto coordsForOpponent(multimap<int, int>& map, int pos) {
+    int count = 0;
+    int x, y;
+    for (auto m : map) {
+        count++;
+        if (pos == count) {
+            return m;
+        }
+    }
+}
+
 int main()
 {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
     RenderWindow mainWindow;
     mainWindow.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
     float width = VideoMode::getDesktopMode().width;//ширина екрана
@@ -43,11 +57,6 @@ int main()
     mainMenuStart(mainWindow, width, height);
 }
 
-int pickCoord() {
-    srand(time(NULL));
-    int num = rand() % 10;
-    return num;
-}
 void enemiesTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
     player.setTurn(false);
     enemy.setTurn(true);
@@ -59,16 +68,19 @@ void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
     text.setString("Your turn");
 }
 //винесла за функцію startBattleship(), щоби не було помилки ... consider moving some data to heap
-BattleShip player("player");
-BattleShip enemy("enemy");
+//BattleShip player("player");
+//BattleShip enemy("enemy");
 
 void startBattleship(RenderWindow& window, int width, int height) {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
     srand(time(NULL));
+    BattleShip player("player");
+    BattleShip enemy("enemy");
     RectangleShape bg(Vector2f(VideoMode::getDesktopMode().width, VideoMode::getDesktopMode().height));
     Texture bgTexture;
     bgTexture.loadFromFile("battleship/paper.jpg");
     bg.setTexture(&bgTexture);
-
     gameText textForShots(" ", "Fonts/LeagueSpartan-Bold.ttf");
     gameText textForTurn(" ", "Fonts/LeagueSpartan-Bold.ttf");
     gameText grid("Your grid                                                                                                                                            opponent`s grid", "Fonts/LeagueSpartan-Bold.ttf");
@@ -81,10 +93,23 @@ void startBattleship(RenderWindow& window, int width, int height) {
     else {
         enemiesTurn(textForTurn, enemy, player);
     }
+    multimap<int, int> shotsForBot;//всі можливі ходи для бота
+    for (int x = 0; x < 10; x++) {
+        for (int y = 0; y < 10; y++) {
+            shotsForBot.emplace(x, y);
+        }
+    }
     int x, y;
-    int prevX = -1, prevY = -1;
-    bool opponentHit = false;
-    int countOfDestroyed = 0;
+    int playerX, playerY;
+    int countOfDestroyed_by_player = 0, countOfDestroyed_by_opponent = 0;
+    pair<int, int> p;//пара, куди будуть вертатися координати з coordsForOpponent
+    int shotsCount = 100;//кількфсть всіх ходів
+    gameText playerShoot(to_string(countOfDestroyed_by_player) + "/10", "Fonts/LeagueSpartan-Bold.ttf");
+    playerShoot.setFontsize(40);
+    playerShoot.setColor(Color::Black);
+    gameText opponentShoot(to_string(countOfDestroyed_by_opponent) + "/10", "Fonts/LeagueSpartan-Bold.ttf");
+    opponentShoot.setFontsize(40);
+    opponentShoot.setColor(Color::Black);
     while (window.isOpen()) {
         Event event;
         while (window.pollEvent(event)) {
@@ -94,22 +119,35 @@ void startBattleship(RenderWindow& window, int width, int height) {
             }
         }
         if (enemy.isMyTurn() == true) {
-            //Sleep(1000);
-            x = pickCoord();
-            //Sleep(1000);
-            y = pickCoord();
-            if (player.checkForRepiteness(x, y) == true) {
-                while (player.checkForRepiteness(x, y) != false) {
-                    x = pickCoord();
-                    y = pickCoord();
+            num = rand() % shotsCount;
+            p = coordsForOpponent(shotsForBot, num);
+            x = p.first;
+            y = p.second;
+            if ((x >= 0 && x <= 9) && (y >= 0 && y <= 9)) {
+                shotsCount--;
+                auto it = find_if(//лямбда, щоб видалити пару з multimap
+                    shotsForBot.begin(), shotsForBot.end(), [&](const auto& pair) {
+                        return pair.first == x
+                        && pair.second == y;
+                    });
+
+                if (it != shotsForBot.end()) {
+                    shotsForBot.erase(it);
                 }
-            }
-            if (player.checkForCorrectness(x, y, window) == true) {
-                enemiesTurn(textForTurn, enemy, player);
-                if (player.checkForCompleteness(x, y) == true) {
-                    textForShots.setString(" ");
+                Sleep(1000);
+                if (player.checkForCorrectness(x, y, window) == true) {
+                    enemiesTurn(textForTurn, enemy, player);
+                    if (player.checkForCompleteness(x, y) == true) {
+                        countOfDestroyed_by_opponent++;
+                        opponentShoot.setString(to_string(countOfDestroyed_by_opponent) + "/10");
+                        textForShots.setString(" ");
+                    }
+                    else {
+                        textForShots.setString(" ");
+                    }
                 }
                 else {
+                    playersTurn(textForTurn, enemy, player);
                     textForShots.setString(" ");
                 }
             }
@@ -120,13 +158,17 @@ void startBattleship(RenderWindow& window, int width, int height) {
         }
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             sf::Vector2i playPos = { (int)((Mouse::getPosition().x / 58) - 18),(int)((Mouse::getPosition().y / 58) - 4) };
-            if (enemy.checkForRepiteness(playPos.x, playPos.y) == true) {
-                textForTurn.setString("Pick another coordinates");
+            playerX = playPos.x;
+            playerY = playPos.y;
+            if (enemy.checkForRepiteness(playerX, playerY) == true) {
+                textForTurn.setString("Pick other coordinates");
             }
             else {
-                if (enemy.checkForCorrectness(playPos.x, playPos.y, window) == true) {
+                if (enemy.checkForCorrectness(playerX, playerY, window) == true) {
                     playersTurn(textForTurn, enemy, player);
-                    if (enemy.checkForCompleteness(playPos.x, playPos.y) == true) {
+                    if (enemy.checkForCompleteness(playerX, playerY) == true) {
+                        countOfDestroyed_by_player++;
+                        playerShoot.setString(to_string(countOfDestroyed_by_player) + "/10");
                         textForShots.setString("Destroyed");
                     }
                     else {
@@ -145,6 +187,7 @@ void startBattleship(RenderWindow& window, int width, int height) {
 
         window.clear();
         window.draw(bg);
+
         grid.showString(window, 470, 840);
         if (textForTurn.str.length() < 10) {
             textForTurn.showString(window, 770, 15);
@@ -158,15 +201,31 @@ void startBattleship(RenderWindow& window, int width, int height) {
         else {
             textForShots.showString(window, 570, 90);
         }
+        playerShoot.showString(window, 1800, 20);
+        opponentShoot.showString(window, 30, 20);
         player.showCoords(window);
         enemy.showCoords(window);
         player.showField(window);
         enemy.showField(window);
+        if (countOfDestroyed_by_opponent == 10 && countOfDestroyed_by_player < 10) {
+            gameText opponentWin("You lost. Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
+            opponentWin.setColor(Color::Black);
+            opponentWin.setFontsize(100);
+            opponentWin.showString(window, 500, 540);
+        }
+        else if (countOfDestroyed_by_player == 10 && countOfDestroyed_by_opponent < 10) {
+            gameText playerWin("You won !!! Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
+            playerWin.setColor(Color::Black);
+            playerWin.setFontsize(100);
+            playerWin.showString(window, 500, 540);
+        }
         window.display();
     }
 }
 
 void battleShipMenu(RenderWindow& bsWindow, int width, int height) {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
     //візуалізація меню
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;

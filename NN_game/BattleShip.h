@@ -11,13 +11,13 @@ class BattleShip
 {
 protected:
 	vector<vector<char>> fullField;//поле, з якого звіряється попадання
-	ifstream mapFile;//файл для закачування розміщення кораблів
-	string fileName;//файл, з якого завантажується поле
-	Texture cellTexture[10][10];//текстура клітинок
-	Sprite cellSprite[10][10];//спрайт клітинок
-	bool myTurn;//чий хід
 	vector<vector<char>> shotsVector;//поля, з яких звіряється повтор ходу
 	vector<vector<char>> playingField;//поле, в якому містяться лише ходи гравця 
+	ifstream mapFile;//файл для закачування розміщення кораблів
+	string fileName;//файл, з якого завантажується поле
+	vector<vector<Texture>> cellTexture;//текстура клітинок
+	vector<vector<Sprite>> cellSprite;//спрайт клітинок
+	bool myTurn;//чий хід
 	Texture coordsTexture[20];//текстури для цифр і букв
 	Sprite coordsSprite[20];//спрайт для них
 	multimap<int, int> firstShipFor3;//щоби не робити ще більше перевірок в checkForCompleteness, координати корабля будуть зберігатися в мапі
@@ -33,6 +33,7 @@ protected:
 	void loadPlayerCoords();//завантажує координати цифр та букв для іграка
 	void loadEnemyCoords();//завантажує координати цифр та букв для суперника
 	void loadShipFor3();//завантажує координати в firstShipFor3 та secondShipFor3
+
 public:
 	BattleShip(string whoseField);//конструктор: викликає loadField,loadCommonFeature, завантажує все в спрайти, вектор shotsVector, playingField
 	bool checkForCorrectness(int x, int y, RenderWindow& window);//перевірка на попадання
@@ -46,7 +47,7 @@ public:
 	void setTurn(bool turn) { myTurn = turn; }
 	bool checkForRepiteness(int vertical, int horizontal)//перевірка на повтор ходу (здебільшого для бота, оскільки координати самі генеруються),якщо повторився хід -- повертає true 
 	{
-		return ((shotsVector[vertical][horizontal] == 'f') ? false : true);
+		return (shotsVector.at(horizontal).at(vertical) == 'f') ? false : true;
 	}
 	~BattleShip();
 };
