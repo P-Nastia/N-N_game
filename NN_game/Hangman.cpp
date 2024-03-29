@@ -8,7 +8,7 @@ Hangman::Hangman(string fileNameToOpen) :loseCounter{ 0 }, selectedLetter{ 0 }, 
     hangerBaseSprite.setScale(Vector2f(1.3f, 1.3f));
     hangerBaseSprite.setPosition(Vector2f(870.f, 35));
     hangmanWindow.create(VideoMode::getDesktopMode(), "Hangman game", Style::Fullscreen);
-    font.loadFromFile("Fonts/CrackerWinter.ttf");
+    font.loadFromFile("fonts/CrackerWinter.ttf");
     alphabet = new Text[26];
     for (int i = 0, xPos = 50; i < 26; i++, xPos += 40) {
         alphabet[i].setFont(font);
@@ -169,12 +169,12 @@ void Hangman::startGame() {
         case 4: {setHangmanBodyPart("HangMan/4.png"); }; break;
         case 5: {setHangmanBodyPart("HangMan/5.png"); }; break;
         case 6: {setHangmanBodyPart("HangMan/6.png"); gameText text("You lost. Correct word was " + wordToGuess,
-            "Fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
+            "fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
             text.showString(hangmanWindow, 100, 450); }; break;
         }
         if (wordCompleted() == true && loseCounter < 6) {
             gameText text("You won. \nPress 'Escape' to exit, \n'Space' to continue playing",
-                "Fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
+                "fonts/LeagueSpartan-Bold.ttf"); text.setColor(Color::Black);
             text.showString(hangmanWindow, 100, 450);
         }
         hangmanWindow.draw(hangmanSprite);

@@ -24,7 +24,7 @@ GameMenu::GameMenu(RenderWindow& window, float cordMenuX, float cordMenuY, int m
 cordMenuX{ cordMenuX }, cordMenuY{ cordMenuY }, maxNumOfItems{ maxItems }, fontSize{ fontSize }, stepWide{ stepWide }, menuItemSelected{ 0 },
 itemColor{ Color(1, 13, 65) }, pickedItemColor{ Color(217, 0, 5) }, borderColor{ Color(56, 108, 160) }
 {
-	font.loadFromFile("Fonts/CrackerWinter.ttf");
+	font.loadFromFile("fonts/CrackerWinter.ttf");
 	menuItems = new Text[maxNumOfItems];
 	//розміщення пунктів
 	for (int i = 0, yPos = cordMenuY; i < maxNumOfItems; i++, yPos += stepWide) {
