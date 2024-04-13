@@ -9,6 +9,7 @@
 #include <map>
 #include <io.h>
 #include <cstdlib>
+#include <set>
 using namespace std;
 using namespace sf;
 #include "Hangman.h"
@@ -17,8 +18,19 @@ using namespace sf;
 #include "gameText.h"
 #include "Board.h"
 #include "Piece.h"
+#include "Uno.h"
 
-// Типи клітинок на ігровому полі
+void showHangManRules(RenderWindow& rules, int width, int height);
+void mainMenuStart(RenderWindow& mainWindow, int width, int height);
+void hangmanMenu(RenderWindow& hangmanMenu, int width, int height);
+//void battleShipMenu(RenderWindow& bsWindow, int width, int height);
+void startBattleship(RenderWindow& window, int width, int height);
+//int checkersMenu(RenderWindow& window, int width, int height);
+int startCheckers();
+void startUno(RenderWindow& window, int width, int height);
+namespace snake {
+   
+    // Типи клітинок на ігровому полі
 #define FIELD_CELL_TYPE_NONE 0   // Пуста клітинка
 #define FIELD_CELL_TYPE_APPLE -1 // Клітинка з яблуком
 #define FIELD_CELL_TYPE_WALL -2  // Клітинка зі стіною
@@ -39,23 +51,14 @@ using namespace sf;
 #define MENU_SETTINGS 1          // Меню налаштувань
 // Кількість життів гравця
 #define LIVES 3
-
-void showHangManRules(RenderWindow& rules, int width, int height);
-void mainMenuStart(RenderWindow& mainWindow, int width, int height);
-void hangmanMenu(RenderWindow& hangmanMenu, int width, int height);
-void battleShipMenu(RenderWindow& bsWindow, int width, int height);
-void startBattleship(RenderWindow& window, int width, int height);
-int checkersMenu(RenderWindow& window, int width, int height);
-int startCheckers(RenderWindow& window, int width, int height);
-namespace snake {
-   
-
     const int field_size_x = 35;     //Ширина поля у клітинках
     const int field_size_y = 25;     //Висота поля у клітинках
     const int cell_size = 32;        //Розмір клітинки на полі(ширина та висота)
     const int score_bar_height = 60; //Висота панелі з рахунком та іншими інформ. елементами
     const int window_width = field_size_x * cell_size;   //Ширина вікна гри, залежна від розмірів поля та клітинок
     const int window_height = field_size_y * cell_size + score_bar_height;   //Висота вікна гри, залежна від розмірів поля, клітинок та висоти панелі рахунку
+
+
     // Структура для зберігання стану гри
     struct GameState {
         int field[field_size_y][field_size_x];   // Поле гри
@@ -514,6 +517,7 @@ namespace snake {
         sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
 
         std::vector<int> snake_direction_queue;
+        snake_direction_queue.resize(1000);
 
         while (window.isOpen())
         {
@@ -522,6 +526,7 @@ namespace snake {
             {
                 if (event.type == sf::Event::Closed) {
                     snake_direction_queue.clear();
+                    //mainMenuStart(mainWindow, width, height);
                     window.close();
                 }
                 if (event.type == sf::Event::KeyPressed) {
@@ -558,7 +563,9 @@ namespace snake {
                                         current_settings_menu_item_index = 0;
                                     }
                                     if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_QUIT) {
+                                        //mainMenuStart(window, width, height);
                                         window.close();
+                                        
                                     }
                                     break;
                                 case sf::Keyboard::Escape:
@@ -711,6 +718,889 @@ namespace snake {
     }
 }
 
+namespace ticTacToe {
+    const int FIELD_SIZE = 9; /*розмір ігрового поля*/
+    const int INIT_WEIGHT = 100; /*Початкова вага матриці ваг*/
+    const int PRECISION_COEF = 75; /*Точність генератора ходу для Smart гравця*/
+    const double STEP_COEF = 0.75; /*Коефіцієнт навчання*/
+    const int STEP_LEARN = 20; /*Крок навчання*/
+    const int NUMBER_OF_GAMES = 10000; /*Кількість ігор які має зіграти Smart гравець для навчання*/
+    const bool stat_smart = true; /*Відображати статистику після навчання Smart*/
+
+    char Field[FIELD_SIZE]; /*масив під ігрове поле*/
+    int size_database_X = 0;/*Розмір бази даних X*/
+    int size_database_O = 0;/*Розмір бази даних O*/
+
+    struct DataBase /*База знань smart гравця*/
+    {
+        char MyField[9]; //Ситуація на полі
+        int MyWeight[9]; //Матриця ваг
+        DataBase() {
+            std::fill(MyWeight, MyWeight + FIELD_SIZE, INIT_WEIGHT);
+        }
+    };
+
+    DataBase* Collections_X = new DataBase[size_database_X];/*База для X комбінацій*/
+    DataBase* Collections_O = new DataBase[size_database_O];/*База для О комбінацій*/
+
+    struct Stack /*Історія виконаних ходів Smart гравця в поточній партії для функції Learn*/
+    {
+        int current_move;
+        int index_weight;
+    };
+
+    struct Wins /*Містить переможну комбінацію та хто виграв*/
+    {
+        int mas[3] = { 0 };
+        char xod;
+    };
+
+    void start_game(); /*Відображає стартове меню гри та визначає послідовність виклику функцій залежно від типу гри*/
+    void setup(int*, bool*); /*Функція ініціалізації прапорних змінних*/
+    void type_symbol(bool*, char*, char*, int); /*Функція рандомно визначає хто гратиме за X а хтось за O*/
+    void clear_field(); /*Функція очищує ігрові поля*/
+    int random_player(); /*Функція повертає можливий хід випадково у стратегії Random*/
+    int input_events(bool*, int, Stack**, int*, char, char); /*Функція повертає хід зроблений користувачем з клавіатури, і виводить варіанти ходу, що залишилися.*/
+    void check_wins(int*, int, int*, int*, int*, bool*, Wins*); /*Функція перевіряє на перемогу після кожного ходу*/
+    void game_logic(int, int*, bool*, int, char, char, int*, int*, int*, bool*, Stack**, int*, Wins*); /*Функція логіки гри*/
+    DataBase* push_database(DataBase*, int*); /*Додає до бази даних невідому ситуацію на полі*/
+    Stack* push_stack(int, int, Stack*, int*); /*Додає до Stack поточний хід гравця Smart*/
+    int get_situation(DataBase*, int); /*Шукає в базі ситуації, що склалася на полі*/
+    int get_smart_random(int, DataBase*); /*Генерує хід Smart гравця на підставі матриці ваг*/
+    void smart_learn(Stack*, int, int, DataBase*); /*Рекурсивна функція навчання, зменшує вагу ходу у разі програшу, і збільшує навпаки, нічия нейтрально*/
+
+    void display_statistic(RenderWindow&, int, int, int); /*Виводить статистику*/
+    void menu_graph(RenderWindow&, int*, Event, bool game_over = false); /*Виводить меню гри*/
+    void display_field(RenderWindow&, char, char, bool game_over = false); /*Виводить ігрову підлогу*/
+    int move_human(RenderWindow&); /*Повертає перебіг людини*/
+    void wins_victory(RenderWindow&, Wins*); /*Виводить смугу при перемозі*/
+    void progress_bar(RenderWindow&, int); /*Виводить ProgressBar під час навчання Smart*/
+
+    int main()
+    {
+        setlocale(0, "");
+        srand(unsigned(time(0)));
+
+        start_game();
+
+        delete[] Collections_X;
+        delete[] Collections_O;
+        return 0;
+    }
+
+    void start_game()
+    {
+        RenderWindow window(VideoMode(800, 600), L"Tic-Tac-Teo AI");
+        Image icon;
+        icon.loadFromFile("tic.png");
+        window.setIcon(32, 32, icon.getPixelsPtr());//setIcon(128, 128, icon.getPixelsPtr())
+        Texture textureFon;
+        Sprite spritefon;
+        textureFon.loadFromFile("fon.png");
+        spritefon.setTexture(textureFon);
+        spritefon.setPosition(0, 0);
+
+        int type_game = 0; /*тип гри, Random або Smart*/
+        int x_wins = 0, o_wins = 0, d_wins = 0; /*накопичувальні змінні для стати*/
+
+        int move = NULL; /*Змінна містить хід*/
+        bool turn = NULL; /*Черга ходу*/
+        char player_1 = NULL, player_2 = NULL; /*символьні змінні хто за що грає*/
+        int draw = 0; /*Сума ходів двох гравців*/
+        bool game_over = false; /*Прапорна: кінець гри*/
+        Wins* Win = new Wins; /* Містить переможну комбінацію і хто виграв*/
+
+        while (window.isOpen())
+        {
+            Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == Event::Closed) {
+                    //mainMenuStart(mainWindow, width, height);
+                    window.close();
+                }
+            }
+            if (type_game == 0)
+            {
+                window.clear();
+                window.draw(spritefon);
+                if (game_over == true)
+                {
+                    display_field(window, player_1, player_2, game_over);
+                    wins_victory(window, Win);
+                }
+                menu_graph(window, &type_game, event, game_over);
+                display_statistic(window, x_wins, o_wins, d_wins);
+                window.display();
+                if (type_game == 1 || type_game == 2)
+                {
+                    setup(&draw, &game_over);
+                    type_symbol(&turn, &player_1, &player_2, type_game);
+                    window.clear();
+                    window.draw(spritefon);
+                }
+            }
+            if (type_game == 3)
+            {
+                int line_bar = 0;
+                for (int i = 0; i < NUMBER_OF_GAMES; i++)
+                {
+                    if (i % (NUMBER_OF_GAMES / 700) == 0)
+                    {
+                        progress_bar(window, line_bar += 1);
+                    }
+                    setup(&draw, &game_over);
+                    type_symbol(&turn, &player_1, &player_2, type_game);
+                    Stack* Hystory = nullptr;
+                    int stack_size = 0;
+                    while (game_over != true)
+                    {
+                        move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
+                        draw++;
+                        game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
+                    }
+                    delete[] Hystory;
+                }
+                type_game = 0;
+            }
+            else if (type_game == 1 || type_game == 2)
+            {
+                window.clear();
+                window.draw(spritefon);
+                display_field(window, player_1, player_2);
+                display_statistic(window, x_wins, o_wins, d_wins);
+                window.display();
+                Stack* Hystory = nullptr;
+                int stack_size = 0;
+                if (turn)
+                {
+                    move = -1;
+                    do
+                    {
+                        move = move_human(window);
+
+                    } while (move == -1 || Field[move] == 'X' || Field[move] == 'O');
+                }
+                else
+                {
+                    move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
+                }
+                draw++;
+                game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
+                if (game_over == true)
+                {
+                    stack_size = 0; delete[] Hystory;
+                    type_game = 0;
+                }
+            }
+        }
+        delete Win;
+    }
+
+    int input_events(bool* turn, int type_game, Stack** Hystory, int* stack_size, char player_1, char player_2)
+    {
+        int move = 0, index;
+
+        if ((*turn && type_game == 3) || type_game == 2)
+        {
+            if (player_1 == 'X' && player_2 == 'O' && type_game == 2)
+            {
+                if (get_situation(Collections_O, size_database_O) == -1)
+                    Collections_O = push_database(Collections_O, &size_database_O);
+
+                index = get_situation(Collections_O, size_database_O);
+
+                move = get_smart_random(index, Collections_O);
+            }
+            else if (player_1 == 'O' && player_2 == 'X' && type_game == 2)
+            {
+                if (get_situation(Collections_X, size_database_X) == -1)
+                    Collections_X = push_database(Collections_X, &size_database_X);
+
+                index = get_situation(Collections_X, size_database_X);
+
+                move = get_smart_random(index, Collections_X);
+            }
+            else if (player_1 == 'O' && player_2 == 'X' && type_game == 3)
+            {
+                if (get_situation(Collections_O, size_database_O) == -1)
+                    Collections_O = push_database(Collections_O, &size_database_O);
+
+                index = get_situation(Collections_O, size_database_O);
+
+                move = get_smart_random(index, Collections_O);
+            }
+            else if (player_1 == 'X' && player_2 == 'O' && type_game == 3)
+            {
+                if (get_situation(Collections_X, size_database_X) == -1)
+                    Collections_X = push_database(Collections_X, &size_database_X);
+
+                index = get_situation(Collections_X, size_database_X);
+
+                move = get_smart_random(index, Collections_X);
+            }
+
+            *Hystory = push_stack(move, index, *Hystory, stack_size);
+
+            return move;
+        }
+        else
+        {
+            return random_player();
+        }
+        return move;
+    }
+
+    void game_logic(int move, int* draw, bool* turn, int type_game, char player_1, char player_2,
+        int* x_wins, int* o_wins, int* d_wins, bool* game_over, Stack** Hystory, int* stack_size, Wins* Win)
+    {
+        bool wins = false;
+        if ((*turn && type_game == 1) || (*turn && type_game == 2))/*Гілка Людини*/
+        {
+            Field[move] = player_1;
+            check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
+            if (wins)
+            {
+                if (Win->xod != 'D' && type_game == 2 && player_1 == 'X')
+                {
+                    smart_learn(*Hystory, *stack_size - 1, -STEP_LEARN, Collections_O);
+                }
+                else if (Win->xod != 'D' && type_game == 2 && player_1 == 'O')
+                {
+                    smart_learn(*Hystory, *stack_size - 1, -STEP_LEARN, Collections_X);
+                }
+                *game_over = true;
+                return;
+            }
+            *turn = false;
+        }
+        else if ((*turn && type_game == 3) || type_game == 2) /*Гілка Smart гравця*/
+        {
+            if (type_game == 2)
+            {
+                Field[move] = player_2;
+            }
+            else
+            {
+                Field[move] = player_1;
+            }
+            check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
+            if (wins)
+            {
+                if (Win->xod != 'D' && player_2 == 'X' && type_game == 2)
+                {
+                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_X);
+                }
+                else if (Win->xod != 'D' && player_2 == 'O' && type_game == 2)
+                {
+                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_O);
+                }
+                else if (Win->xod != 'D' && player_1 == 'X' && type_game == 3)
+                {
+                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_X);
+                }
+                else if (Win->xod != 'D' && player_1 == 'O' && type_game == 3)
+                {
+                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_O);
+                }
+                *game_over = true;
+                return;
+            }
+            type_game == 2 ? *turn = true : *turn = false;
+        }
+        else /*Гілка Random гравця*/
+        {
+            Field[move] = player_2;
+            check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
+            if (wins)
+            {
+                if (Win->xod != 'D' && type_game != 1 && player_2 == 'X')
+                {
+                    smart_learn(*Hystory, *stack_size - 1, -STEP_LEARN, Collections_O);
+                }
+                else if (Win->xod != 'D' && type_game != 1 && player_2 == 'O')
+                {
+                    smart_learn(*Hystory, *stack_size - 1, -STEP_LEARN, Collections_X);
+                }
+                *game_over = true;
+                return;
+            }
+            *turn = true;
+        }
+    }
+
+    void check_wins(int* draw, int type_game, int* x_wins, int* o_wins, int* d_wins, bool* wins, Wins* Win)
+    {
+        int victory[8][3] = { {0, 1 , 2}, {3, 4, 5}, {6, 7, 8},
+        {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6} };
+
+        for (int i = 0; i < FIELD_SIZE - 1; i++)
+        {
+            if (Field[victory[i][0]] == Field[victory[i][1]] &&
+                Field[victory[i][0]] == Field[victory[i][2]] &&
+                Field[victory[i][0]] != ' ')
+            {
+                *wins = true;
+                if (stat_smart == true && type_game == 3)
+                    Field[victory[i][0]] == 'X' ? (*x_wins)++ : (*o_wins)++;
+                else if (type_game != 3)
+                    Field[victory[i][0]] == 'X' ? (*x_wins)++ : (*o_wins)++;
+                for (int j = 0, k = 0; j < 3; j++, k++)
+                {
+                    Win->mas[j] = victory[i][k];
+                }
+                Field[victory[i][0]] == 'X' ? Win->xod = 'X' : Win->xod = 'O';
+                return;
+            }
+        }
+        if (*draw == 9)
+        {
+            *wins = true;
+            if (stat_smart == true && type_game == 3)
+                (*d_wins)++;
+            else if (type_game != 3)
+                (*d_wins)++;
+            for (int i = 0; i < 3; i++) { Win->mas[i] = 0; }
+            Win->xod = 'D';
+            return;
+        }
+        Win->xod = 'U';
+    }
+
+    void smart_learn(Stack* Hystory, int iterator, int STEP_LEARN, DataBase* Collections)
+    {
+        if (iterator < 0)
+            return;
+
+        Collections[Hystory[iterator].index_weight].MyWeight[Hystory[iterator].current_move] += STEP_LEARN;
+
+        if ((Collections[Hystory[iterator].index_weight].MyWeight[Hystory[iterator].current_move]) < 0)
+        {
+            Collections[Hystory[iterator].index_weight].MyWeight[Hystory[iterator].current_move] = 0;
+        }
+
+        smart_learn(Hystory, --iterator, STEP_LEARN * STEP_COEF, Collections);
+    }
+
+    Stack* push_stack(int move, int index, Stack* Hystory, int* stack_size)
+    {
+        Stack* Temp = new Stack[*stack_size + 1];
+
+        for (int i = 0; i < *stack_size; i++)
+        {
+            Temp[i] = Hystory[i];
+        }
+
+        Temp[*stack_size].current_move = move;
+        Temp[*stack_size].index_weight = index;
+
+        delete[] Hystory;
+
+        (*stack_size)++;
+
+        return Temp;
+    }
+
+    DataBase* push_database(DataBase* Collections, int* size_database)
+    {
+        DataBase* Temp = new DataBase[*size_database + 1];
+
+        for (int i = 0; i < *size_database; i++)
+        {
+            Temp[i] = Collections[i];
+        }
+
+        strcpy_s(Temp[*size_database].MyField, Field);
+
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            if (strncmp(&Temp[*size_database].MyField[i], " ", 1) != 0)
+            {
+                Temp[*size_database].MyWeight[i] = 0;
+            }
+        }
+
+        delete[] Collections;
+
+        (*size_database)++;
+
+        return Temp;
+    }
+
+    int get_situation(DataBase* Collections, int size_database)
+    {
+
+        for (int i = 0; i < size_database; i++)
+        {
+            if (strcmp(Collections[i].MyField, Field) == 0)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int get_smart_random(int index, DataBase* Collections)
+    {
+        int summ = 0, count = 0, move = 0;
+        int mas_temp[9];
+
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            summ += Collections[index].MyWeight[i];
+            mas_temp[i] = Collections[index].MyWeight[i];
+        }
+
+        if (summ == 0) return random_player();
+
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            mas_temp[i] = (mas_temp[i] / (double)summ) * PRECISION_COEF;
+        }
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            count += mas_temp[i];
+        }
+
+        int* new_mas = new int[count];
+
+        for (int i = 0, j = 0; i < FIELD_SIZE; i++)
+        {
+            int tmp = mas_temp[i];
+            while (tmp != 0)
+            {
+                new_mas[j] = i;
+                j++;
+                tmp--;
+            }
+        }
+
+        std::random_shuffle(new_mas, new_mas + count);
+
+        move = new_mas[rand() % count];
+
+        delete[] new_mas;
+
+        return move;
+    }
+
+    int random_player()
+    {
+        int move = 0, count = 0;
+
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            if (Field[i] == ' ') count++;
+        }
+
+        int* pTmp = new int[count];
+
+        for (int i = 0, j = 0; i < FIELD_SIZE; i++)
+        {
+            if (Field[i] == ' ')
+            {
+                pTmp[j] = i;
+                j++;
+            }
+        }
+
+        move = pTmp[rand() % count];
+
+        delete[] pTmp;
+
+        return move;
+    }
+
+    void setup(int* draw, bool* game_over)
+    {
+        *game_over = false;
+        *draw = 0;
+        clear_field();
+    }
+
+    void type_symbol(bool* turn, char* player_1, char* player_2, int type_game)
+    {
+        int type_symbol = rand() % 2 + 1;
+
+        if (type_symbol == 2)
+        {
+            *player_1 = 'O'; *player_2 = 'X';
+            *turn = false;
+        }
+        else
+        {
+            *player_1 = 'X'; *player_2 = 'O';
+            *turn = true;
+        }
+    }
+
+    void clear_field()
+    {
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            Field[i] = ' ';
+        }
+    }
+
+    void display_statistic(RenderWindow& window, int x_wins, int o_wins, int d_wins)
+    {
+        Text text_2, text_3, text_4, text_5, text_6, text_7, text_8, text_9;
+        Font font;
+        font.loadFromFile("comic.ttf");
+
+        char x[7]; char o[7]; char d[7]; char s[7];
+
+        int summ = x_wins + o_wins + d_wins;
+
+        for (auto it : { &text_2, &text_3, &text_4, &text_8, &text_9 })
+        {
+            it->setFont(font);
+            it->setCharacterSize(25);
+        }
+
+        for (auto it : { &text_5, &text_6, &text_7 })
+        {
+            it->setFont(font);
+            it->setCharacterSize(35);
+            it->setFillColor(Color(65, 105, 255));
+        }
+
+        for (auto it : { &text_2, &text_3, &text_4 })
+        {
+            it->setFillColor(Color(65, 105, 255));
+            it->setStyle(Text::Underlined);
+        }
+
+        text_3.setFillColor(Color(220, 20, 60));
+        text_6.setFillColor(Color(220, 20, 60));
+        text_8.setFillColor(Color(34, 139, 34));
+        text_9.setFillColor(Color(34, 139, 34));
+
+        text_2.setString(L"Перемоги X");
+        text_3.setString(L"Перемоги O");
+        text_4.setString(L"Нічиї");
+        text_9.setString(L"Усього провели ігор: ");
+
+        //це мій код який я виправила
+
+        /*text_5.setString(_itoa(x_wins, x, 10));
+        text_6.setString(_itoa(o_wins, o, 10));
+        text_7.setString(_itoa(d_wins, d, 10));
+        text_8.setString(_itoa(summ, s, 10));*/
+
+
+        //це код який запропонував мені chat gpt
+
+        //char x[7], o[7], d[7], s[7];
+
+        _itoa_s(x_wins, x, 10);
+        _itoa_s(o_wins, o, 10);
+        _itoa_s(d_wins, d, 10);
+        _itoa_s(summ, s, 10);
+
+        text_5.setString(x);
+        text_6.setString(o);
+        text_7.setString(d);
+        text_8.setString(s);
+
+        text_2.setPosition(75, 400);
+        text_3.setPosition(355, 400);
+        text_4.setPosition(650, 400);
+        text_5.setPosition(75, 450);
+        text_6.setPosition(355, 450);
+        text_7.setPosition(650, 450);
+        text_8.setPosition(500, 520);
+        text_9.setPosition(250, 520);
+
+        window.draw(text_9); window.draw(text_2);
+        window.draw(text_3); window.draw(text_4);
+        window.draw(text_5); window.draw(text_6);
+        window.draw(text_7); window.draw(text_8);
+    }
+
+    void menu_graph(RenderWindow& window, int* type_game, Event event, bool game_over)
+    {
+        Texture logo;
+        Sprite spritelogo;
+        logo.loadFromFile("logo.png");
+        spritelogo.setTexture(logo);
+        spritelogo.setPosition(10, 30);
+
+        Text menu_0, menu_1, menu_2, menu_3, menu_4;
+        Font font;
+        font.loadFromFile("comic.ttf");
+
+        for (auto it : { &menu_0, &menu_1, &menu_2, &menu_3, &menu_4 })
+        {
+            it->setFont(font);
+            it->setCharacterSize(30);
+            it->setFillColor(Color(255, 140, 0));
+        }
+
+        menu_0.setFillColor(Color::Black);
+        menu_4.setFillColor(Color(255, 20, 147));
+
+        menu_0.setStyle(Text::Underlined);
+
+        menu_0.setString(L"Виберіть варіант гри");
+        menu_1.setString(L"Пробна гра Random");
+        menu_2.setString(L"Проти Smart гравця");
+        menu_3.setString(L"+10000 партій з Random ");
+        menu_4.setString(L"Вихід");
+
+        menu_0.setPosition(430, 70);
+        menu_1.setPosition(450, 130);
+        menu_2.setPosition(450, 190);
+        menu_3.setPosition(450, 250);
+        menu_4.setPosition(560, 300);
+
+        if (IntRect(450, 130, 320, 30).contains(Mouse::getPosition(window)))
+        {
+            menu_1.setFillColor(Color::Blue);
+            if (event.type == Event::MouseButtonReleased)
+                if (event.mouseButton.button == Mouse::Left) *type_game = 1;
+        }
+
+        if (IntRect(450, 190, 320, 30).contains(Mouse::getPosition(window)))
+        {
+            menu_2.setFillColor(Color::Blue);
+            if (event.type == Event::MouseButtonReleased)
+                if (event.mouseButton.button == Mouse::Left) *type_game = 2;
+        }
+        if (IntRect(450, 250, 320, 30).contains(Mouse::getPosition(window)))
+        {
+            menu_3.setFillColor(Color::Blue);
+            if (event.type == Event::MouseButtonReleased)
+                if (event.mouseButton.button == Mouse::Left) *type_game = 3;
+        }
+        if (IntRect(560, 300, 100, 30).contains(Mouse::getPosition(window)))
+        {
+            menu_4.setFillColor(Color::Black);
+            if (event.type == Event::MouseButtonReleased)
+                if (event.mouseButton.button == Mouse::Left) window.close();
+        }
+
+        window.draw(menu_0); window.draw(menu_1);
+        window.draw(menu_2); window.draw(menu_3);
+        window.draw(menu_4);
+        if (!game_over)
+        {
+            window.draw(spritelogo);
+        }
+    }
+
+    void display_field(RenderWindow& window, char player_1, char player_2, bool game_over)
+    {
+        RectangleShape line_1(Vector2f(300.f, 3.f)), line_2(Vector2f(300.f, 3.f));
+        RectangleShape line_3(Vector2f(300.f, 3.f)), line_4(Vector2f(300.f, 3.f));
+
+        for (auto it : { &line_1, &line_2, &line_3, &line_4 })
+        {
+            it->setFillColor(Color::Black);
+        }
+
+        line_1.rotate(90); line_2.rotate(90);
+
+        line_1.move(150, 50); line_2.move(250, 50);
+        line_3.move(50, 150); line_4.move(50, 250);
+
+        window.draw(line_1); window.draw(line_2);
+        window.draw(line_3); window.draw(line_4);
+
+        Text X, O, type_char_1, type_char_2, text_1, text_2, text_3;
+        Font font;
+        font.loadFromFile("comic.ttf");
+
+        text_1.setFont(font);
+        text_1.setCharacterSize(25);
+        text_1.setString(L"Визначено, що ви граєте за ");
+        text_2.setFont(font);
+        text_2.setCharacterSize(25);
+        text_2.setString(L"Противник грає за ");
+        text_3.setFont(font);
+        text_3.setCharacterSize(25);
+        text_3.setString(L"Хрестики ходять першими!");
+        text_3.setFillColor(Color(65, 105, 255));
+
+        type_char_1.setFont(font);
+        type_char_1.setCharacterSize(75);
+        type_char_1.setString(player_1);
+        type_char_2.setFont(font);
+        type_char_2.setCharacterSize(75);
+        type_char_2.setString(player_2);
+
+        if (player_1 == 'X') {
+            type_char_1.setFillColor(Color(65, 105, 255));
+            type_char_2.setFillColor(Color(220, 20, 60));
+            text_1.setFillColor(Color(65, 105, 255));
+            text_2.setFillColor(Color(220, 20, 60));
+        }
+        else {
+            type_char_1.setFillColor(Color(220, 20, 60));
+            type_char_2.setFillColor(Color(65, 105, 255));
+            text_1.setFillColor(Color(220, 20, 60));
+            text_2.setFillColor(Color(65, 105, 255));
+        }
+        text_1.setPosition(400, 75);
+        type_char_1.setPosition(550, 105);
+        text_2.setPosition(450, 190);
+        type_char_2.setPosition(550, 220);
+        text_3.setPosition(425, 310);
+
+        if (!game_over)
+        {
+            window.draw(type_char_1);
+            window.draw(type_char_2);
+            window.draw(text_1);
+            window.draw(text_2);
+            window.draw(text_3);
+        }
+
+        for (auto it : { &X, &O })
+        {
+            it->setFont(font);
+            it->setCharacterSize(100);
+        }
+
+        X.setFillColor(Color(65, 105, 255));
+        O.setFillColor(Color(220, 20, 60));
+
+        X.setString("X"); O.setString("O");
+
+        for (int i = 0; i < FIELD_SIZE; i++)
+        {
+            if (Field[i] == 'X')
+            {
+                if (i == 0) { X.setPosition(60, 35); window.draw(X); }
+                if (i == 1) { X.setPosition(160, 35); window.draw(X); }
+                if (i == 2) { X.setPosition(260, 35); window.draw(X); }
+
+                if (i == 3) { X.setPosition(60, 135); window.draw(X); }
+                if (i == 4) { X.setPosition(160, 135); window.draw(X); }
+                if (i == 5) { X.setPosition(260, 135); window.draw(X); }
+
+                if (i == 6) { X.setPosition(60, 235); window.draw(X); }
+                if (i == 7) { X.setPosition(160, 235); window.draw(X); }
+                if (i == 8) { X.setPosition(260, 235); window.draw(X); }
+            }
+            else if (Field[i] == 'O')
+            {
+                if (i == 0) { O.setPosition(60, 35); window.draw(O); }
+                if (i == 1) { O.setPosition(160, 35); window.draw(O); }
+                if (i == 2) { O.setPosition(260, 35); window.draw(O); }
+
+                if (i == 3) { O.setPosition(60, 135); window.draw(O); }
+                if (i == 4) { O.setPosition(160, 135); window.draw(O); }
+                if (i == 5) { O.setPosition(260, 135); window.draw(O); }
+
+                if (i == 6) { O.setPosition(60, 235); window.draw(O); }
+                if (i == 7) { O.setPosition(160, 235); window.draw(O); }
+                if (i == 8) { O.setPosition(260, 235); window.draw(O); }
+            }
+        }
+    }
+
+    int move_human(RenderWindow& window)
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+        }
+        if (IntRect(60, 60, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 0;
+        if (IntRect(160, 60, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 1;
+        if (IntRect(260, 60, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 2;
+        if (IntRect(60, 160, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 3;
+        if (IntRect(160, 160, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 4;
+        if (IntRect(260, 160, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 5;
+        if (IntRect(60, 260, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 6;
+        if (IntRect(160, 260, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 7;
+        if (IntRect(260, 260, 80, 80).contains(Mouse::getPosition(window)))
+            if (Mouse::isButtonPressed(Mouse::Left)) return 8;
+
+        return -1;
+    }
+
+    void wins_victory(RenderWindow& window, Wins* Win)
+    {
+        RectangleShape line(Vector2f(300.f, 5.f));
+        RectangleShape line_2(Vector2f(425.f, 5.f));
+
+        line.setFillColor(Color(0, 153, 102));
+        line_2.setFillColor(Color(0, 153, 102));
+
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{0, 1, 2})
+        {
+            line.setPosition(50, 100);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{3, 4, 5})
+        {
+            line.setPosition(50, 200);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{6, 7, 8})
+        {
+            line.setPosition(50, 300);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{0, 3, 6})
+        {
+            line.rotate(90); line.setPosition(100, 50);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{1, 4, 7})
+        {
+            line.rotate(90); line.setPosition(200, 50);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{2, 5, 8})
+        {
+            line.rotate(90); line.setPosition(300, 50);
+            window.draw(line);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{0, 4, 8})
+        {
+            line_2.rotate(45); line_2.setPosition(50, 50);
+            window.draw(line_2);
+        }
+        if (std::set<int>(Win->mas, Win->mas + 3) == std::set<int>{2, 4, 6})
+        {
+            line_2.rotate(135); line_2.setPosition(350, 50);
+            window.draw(line_2);
+        }
+    }
+
+    void progress_bar(RenderWindow& window, int line_bar)
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+        }
+
+        RectangleShape progressBar;
+        progressBar.setFillColor(Color(127, 255, 212));
+        progressBar.setOutlineThickness(2);
+        progressBar.setOutlineColor(Color::Black);
+        progressBar.setPosition(50, 20);
+        progressBar.setSize(Vector2f(line_bar, 20));
+
+        window.draw(progressBar);
+        window.display();
+    }
+}
+
 void setText(Text& menuText, float xPos, float yPos, String str, int fontSize = 60,
     Color menuTextColor = Color::White, int bord = 0, Color borderColor = Color::Black)//bord = обрамлення тексту
 {
@@ -756,15 +1646,15 @@ void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
     text.setString("Your turn");
 }
 //винесла за функцію startBattleship(), щоби не було помилки ... consider moving some data to heap
-//BattleShip player("player");
-//BattleShip enemy("enemy");
+BattleShip player("player");
+BattleShip enemy("enemy");
 
 void startBattleship(RenderWindow& window, int width, int height) {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     srand(time(NULL));
-    BattleShip player("player");
-    BattleShip enemy("enemy");
+    /*BattleShip player("player");
+    BattleShip enemy("enemy");*/
     RectangleShape bg(Vector2f(VideoMode::getDesktopMode().width, VideoMode::getDesktopMode().height));
     Texture bgTexture;
     bgTexture.loadFromFile("battleship/paper.jpg");
@@ -870,7 +1760,7 @@ void startBattleship(RenderWindow& window, int width, int height) {
             }
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            battleShipMenu(window, width, height);
+            mainMenuStart(window, width, height);
         }
 
         window.clear();
@@ -911,51 +1801,51 @@ void startBattleship(RenderWindow& window, int width, int height) {
     }
 }
 
-void battleShipMenu(RenderWindow& bsWindow, int width, int height) {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
-    //візуалізація меню
-    RectangleShape mainBackground(Vector2f(width, height));//фон меню
-    Texture windowTexture;
-    windowTexture.loadFromFile("battleship/BSMenuBG.jpeg");
-    mainBackground.setTexture(&windowTexture);
-    //встановлюємо шрифт для навз категорій
-    Font font;
-    font.loadFromFile("fonts/LeagueSpartan-Bold.ttf");
-    Text titulText;
-    titulText.setFont(font);
-    setText(titulText, 340, 90, "Battleship menu", 150, Color(60, 97, 223), 10);
-    //використовуємо клас MainGameMenu
-    String menuNames[] = { "Rules","Play", "Exit" };
-    GameMenu menu(bsWindow, 950, 550, 3, menuNames, 100, 160);
-    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
-    //початок гри
-    while (bsWindow.isOpen()) {
-        Event event;
-        while (bsWindow.pollEvent(event)) {
-            if (event.type == Event::KeyReleased) {
-                if (event.key.code == Keyboard::Up) {
-                    menu.moveUp();
-                }
-                if (event.key.code == Keyboard::Down) {
-                    menu.moveDown();
-                }
-                if (event.key.code == Keyboard::Enter) {
-                    switch (menu.getMenuSelected()) {
-                    case 0: { }; break;
-                    case 1: { startBattleship(bsWindow, width, height); } break;
-                    case 2: { mainMenuStart(bsWindow, width, height); }; break;
-                    }
-                }
-            }
-        }
-        bsWindow.clear();
-        bsWindow.draw(mainBackground);
-        bsWindow.draw(titulText);
-        menu.drawItems();
-        bsWindow.display();
-    }
-}
+//void battleShipMenu(RenderWindow& bsWindow, int width, int height) {
+//    SetConsoleCP(1251);
+//    SetConsoleOutputCP(1251);
+//    //візуалізація меню
+//    RectangleShape mainBackground(Vector2f(width, height));//фон меню
+//    Texture windowTexture;
+//    windowTexture.loadFromFile("battleship/BSMenuBG.jpeg");
+//    mainBackground.setTexture(&windowTexture);
+//    //встановлюємо шрифт для навз категорій
+//    Font font;
+//    font.loadFromFile("fonts/LeagueSpartan-Bold.ttf");
+//    Text titulText;
+//    titulText.setFont(font);
+//    setText(titulText, 340, 90, "Battleship menu", 150, Color(60, 97, 223), 10);
+//    //використовуємо клас MainGameMenu
+//    String menuNames[] = { "Rules","Play", "Exit" };
+//    GameMenu menu(bsWindow, 950, 550, 3, menuNames, 100, 160);
+//    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
+//    //початок гри
+//    while (bsWindow.isOpen()) {
+//        Event event;
+//        while (bsWindow.pollEvent(event)) {
+//            if (event.type == Event::KeyReleased) {
+//                if (event.key.code == Keyboard::Up) {
+//                    menu.moveUp();
+//                }
+//                if (event.key.code == Keyboard::Down) {
+//                    menu.moveDown();
+//                }
+//                if (event.key.code == Keyboard::Enter) {
+//                    switch (menu.getMenuSelected()) {
+//                    case 0: { }; break;
+//                    case 1: { startBattleship(bsWindow, width, height); } break;
+//                    case 2: { mainMenuStart(bsWindow, width, height); }; break;
+//                    }
+//                }
+//            }
+//        }
+//        bsWindow.clear();
+//        bsWindow.draw(mainBackground);
+//        bsWindow.draw(titulText);
+//        menu.drawItems();
+//        bsWindow.display();
+//    }
+//}
 
 void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
     //візуалізація меню
@@ -965,13 +1855,13 @@ void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
     mainBackground.setTexture(&windowTexture);
     //встановлюємо шрифт для навз категорій
     Font font;
-    font.loadFromFile("fonts/LeagueSpartan-Bold.ttf");
+    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
     Text titulText;
     titulText.setFont(font);
     setText(titulText, 480, 50, "Game menu", 150, Color(1, 13, 65), 10);
     //використовуємо клас MainGameMenu
-    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Checkers","Exit game" };//потім додамо ще назви
-    GameMenu menu(mainWindow, 950, 450, 6, menuNames, 80, 100);
+    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Checkers","Uno","Exit game" };//потім додамо ще назви
+    GameMenu menu(mainWindow, 950, 350, 7, menuNames, 80, 100);
     menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
     //початок гри
     while (mainWindow.isOpen()) {
@@ -986,12 +1876,13 @@ void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
                 }
                 if (event.key.code == Keyboard::Enter) {
                     switch (menu.getMenuSelected()) {
-                    case 0://tic tac toe
+                    case 0: {ticTacToe::main(); }; break;
                     case 1:hangmanMenu(mainWindow, width, height); break;
-                    case 2: {snake::main(); } break;
-                    case 3:battleShipMenu(mainWindow, width, height); break;
-                    case 4:checkersMenu(mainWindow, width, height); break;
-                    case 5: mainWindow.close(); break;
+                    case 2: {snake::main(); }; break;
+                    case 3:startBattleship(mainWindow, width, height); break;
+                    case 4:startCheckers(); break;
+                    case 5:startUno(mainWindow, width, height); break;
+                    case 6: mainWindow.close(); break;
                     }
                 }
             }
@@ -1034,17 +1925,17 @@ void hangmanMenu(RenderWindow& hangmanMenu, int width, int height) {
     //візуалізація меню
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
-    windowTexture.loadFromFile("images/hangmanMenu.png");
+    windowTexture.loadFromFile("Images/hangmanMenu.png");
     mainBackground.setTexture(&windowTexture);
     //встановлюємо шрифт для навз категорій
     Font font;
-    font.loadFromFile("fonts/LeagueSpartan-Bold.ttf");
+    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
     Text titulText;
     titulText.setFont(font);
     setText(titulText, 400, 80, "Hangman menu", 150, Color(1, 13, 65), 10);
     //використовуємо клас MainGameMenu
-    String menuNames[] = { "Body parts","Sports","Proffesions", "Rules", "Exit" };
-    GameMenu menu(hangmanMenu, 950, 550, 5, menuNames, 100, 100);
+    String menuNames[] = { "Body parts","Sports","Proffesions", "Exit" };
+    GameMenu menu(hangmanMenu, 950, 550, 4, menuNames, 100, 100);
     menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
     //початок гри
 
@@ -1066,8 +1957,7 @@ void hangmanMenu(RenderWindow& hangmanMenu, int width, int height) {
                         hm.startGame(); }; break;
                     case 2: {Hangman hm("proffesions.txt");
                         hm.startGame(); }; break;
-                    case 3:showHangManRules(hangmanMenu, width, height); break;
-                    case 4: {
+                    case 3: {
                         mainMenuStart(hangmanMenu, width, height);
                     } break;
                     }
@@ -1082,51 +1972,51 @@ void hangmanMenu(RenderWindow& hangmanMenu, int width, int height) {
     }
 }
 
-int checkersMenu(RenderWindow& window, int width, int height) {
-    
-    RectangleShape mainBackground(Vector2f(width, height));//фон меню
-    Texture windowTexture;
-    windowTexture.loadFromFile("Texture/fonMenu.jpg");
-    mainBackground.setTexture(&windowTexture);
-    //встановлюємо шрифт для навз категорій
-    Font font;
-    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
-    Text titulText;
-    titulText.setFont(font);
-    setText(titulText, 480, 50, "Game menu", 150, Color(1, 13, 65), 10);
-    //використовуємо клас MainGameMenu
-    String menuNames[] = { "Play", "Exit" };//потім додамо ще назви
-    GameMenu menu(window, 950, 550, 2, menuNames, 100, 200);
-    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
-    //початок гри
-    while (window.isOpen()) {
-        Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == Event::KeyReleased) {
-                if (event.key.code == Keyboard::Up) {
-                    menu.moveUp();
-                }
-                if (event.key.code == Keyboard::Down) {
-                    menu.moveDown();
-                }
-                if (event.key.code == Keyboard::Enter) {
-                    switch (menu.getMenuSelected()) {
-                    case 0:startCheckers(window, width, height);
-                    case 1:mainMenuStart(window, width, height);
-                    }
-                }
-            }
-        }
-        window.clear();
-        window.draw(mainBackground);
-        window.draw(titulText);
-        menu.drawItems();
-        window.display();
-    }
-    return 0;
-}
+//int checkersMenu(RenderWindow& window, int width, int height) {
+//    
+//    RectangleShape mainBackground(Vector2f(width, height));//фон меню
+//    Texture windowTexture;
+//    windowTexture.loadFromFile("Texture/fonMenu.jpg");
+//    mainBackground.setTexture(&windowTexture);
+//    //встановлюємо шрифт для навз категорій
+//    Font font;
+//    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
+//    Text titulText;
+//    titulText.setFont(font);
+//    setText(titulText, 480, 50, "Game menu", 150, Color(1, 13, 65), 10);
+//    //використовуємо клас MainGameMenu
+//    String menuNames[] = { "Play", "Exit" };//потім додамо ще назви
+//    GameMenu menu(window, 950, 550, 2, menuNames, 100, 200);
+//    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
+//    //початок гри
+//    while (window.isOpen()) {
+//        Event event;
+//        while (window.pollEvent(event)) {
+//            if (event.type == Event::KeyReleased) {
+//                if (event.key.code == Keyboard::Up) {
+//                    menu.moveUp();
+//                }
+//                if (event.key.code == Keyboard::Down) {
+//                    menu.moveDown();
+//                }
+//                if (event.key.code == Keyboard::Enter) {
+//                    switch (menu.getMenuSelected()) {
+//                    case 0:startCheckers(window, width, height);
+//                    case 1:mainMenuStart(window, width, height);
+//                    }
+//                }
+//            }
+//        }
+//        window.clear();
+//        window.draw(mainBackground);
+//        window.draw(titulText);
+//        menu.drawItems();
+//        window.display();
+//    }
+//    return 0;
+//}
 
-int startCheckers(RenderWindow& Window, int width, int height) {
+int startCheckers() {
     ContextSettings settings;
     settings.antialiasingLevel = 16.0;
     Event event;
@@ -1138,7 +2028,9 @@ int startCheckers(RenderWindow& Window, int width, int height) {
     Piece* SelectedPiece = NULL;
     int turn = 1;
     VideoMode desktop = VideoMode::getDesktopMode();
-    RenderWindow window(desktop,"Checkers",Style::Fullscreen);
+
+    RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
+
     for (int i = 0; i < 12; i++) {
         WhitePieces[i].color = Color::White;
         RedPieces[i].color = Color::Red;
@@ -1150,7 +2042,6 @@ int startCheckers(RenderWindow& Window, int width, int height) {
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) {
                 window.close();
-                checkersMenu(Window, width, height);
             }
             if (event.type == Event::MouseButtonReleased) {
                 if (event.mouseButton.button == Mouse::Left) {
@@ -1160,11 +2051,17 @@ int startCheckers(RenderWindow& Window, int width, int height) {
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
             window.close();
-            checkersMenu(Window, width, height);
         }
         window.clear();
 
         board.Draw(window);
+
+        int tileSize = window.getSize().x / board.size;
+
+        if (turn == 2) {
+            // Виклик функції AI гравця
+            AIPlayer(WhitePieces, RedPieces, turn);
+        }
 
         if (SelectedPiece != NULL) {
             board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
@@ -1207,4 +2104,200 @@ int startCheckers(RenderWindow& Window, int width, int height) {
         window.display();
     }
     return 0;
+}
+
+//функція, яка сетить значення карти
+
+void setCardParameters(unoCards& from, unoCards& to) {
+    to.color = from.color;
+    to.sprite = from.sprite;// = from.sprite;
+    to.symbol = from.symbol;
+}
+void playersTurn(Player& player, Opponent& opponent) {
+    player.setTurn(true);
+    opponent.setTurn(false);
+}
+void opponentsTurn(Player& player, Opponent& opponent) {
+    player.setTurn(false);
+    opponent.setTurn(true);
+}
+void startUno(RenderWindow& window, int width, int height) {
+    RectangleShape bg(Vector2f(width, height));
+    Texture bgTexture;
+    bgTexture.loadFromFile("Uno/unoBG.jpg");
+    bg.setTexture(&bgTexture);
+    Uno unoTable("Uno/SymbolAndColor.txt");
+    Texture t;
+    t.loadFromFile("Uno/hiddenCard.png");
+    Sprite s;
+    s.setTexture(t);
+    vector<unoCards> startCardsDeck;
+    startCardsDeck.resize(7);
+    unoCards temp;
+
+    for (int i = 0; i < 7; i++) {
+        temp = unoTable.takeCard();
+        setCardParameters(temp, startCardsDeck.at(i));
+    }
+
+    vector<unoCards> startCardsDeck2;
+    startCardsDeck2.resize(7);
+
+
+    for (int i = 0; i < 7; i++) {
+        temp = unoTable.takeCard();
+        setCardParameters(temp, startCardsDeck2.at(i));
+    }
+
+    Opponent opponent(startCardsDeck2);
+    Player player(startCardsDeck);
+    vector<CircleShape> colorsToPick;
+    colorsToPick.resize(4);
+    for (int i = 0, yPos = 450; i < colorsToPick.size(); i++, yPos += 70) {
+        colorsToPick.at(i).setOutlineColor(Color::White);
+        colorsToPick.at(i).setOutlineThickness(4);
+        colorsToPick.at(i).setRadius(17);
+        colorsToPick.at(i).setPosition(Vector2f(1250, yPos));
+    }
+
+    colorsToPick.at(0).setFillColor(Color(255, 85, 85));
+    colorsToPick.at(1).setFillColor(Color(35, 177, 77));
+    colorsToPick.at(2).setFillColor(Color(255, 201, 13));
+    colorsToPick.at(3).setFillColor(Color(85, 85, 255));
+
+    bool playerPicksCards = false;//чи потрібно тягнути карти гравцю
+    bool opponentPicksCards = false;//чи потрібно тягнути карти супернику
+    int numberOfCardsToPick;//кількість карт, які потрібно потягнути
+
+    bool playerPicksColor = false;
+
+    int whoStarts = rand() % 2;
+    if (whoStarts == 0) {
+        playersTurn(player, opponent);
+    }
+    else {
+        opponentsTurn(player, opponent);
+    }
+    int itemOfcard;//буде приходити цифра 0 -- якщо просто цифра на карті, 1 -- пропустити хід, 2 -- пропуск ходу, 3 -- +2, 4 -- змінити колір, 5 -- +4 і змінити колір
+
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) window.close();
+            if (event.key.code == Keyboard::Escape) {
+                mainMenuStart(window, width, height);
+            }
+
+        }
+        if (opponent.getTurn() == true) {
+            if (opponentPicksCards == true) {
+                temp = unoTable.takeCard();
+                //setCardParameters(unoTable.takeCard(), temp);
+                opponent.addCard(temp);
+                numberOfCardsToPick--;
+                if (numberOfCardsToPick == 0) {
+                    opponentPicksCards = false;
+                    playersTurn(player, opponent);
+                }
+                else
+                    opponentsTurn(player, opponent);
+            }
+            else {
+                temp = opponent.pushCard();
+                //setCardParameters(opponent.pushCard(), temp);
+                if (temp.symbol == "notFound") {
+                    opponentsTurn(player, opponent);
+                    opponentPicksCards;
+                    numberOfCardsToPick = 1;
+                }
+                else {
+                    unoTable.setCurrentCard(temp);
+                    player.setCardToBeat(temp);
+                    itemOfcard = opponent.checkForOtherThanNumberCard();
+
+                    switch (itemOfcard) {
+                    case 0:break; break;
+                    case 1:opponentsTurn(player, opponent); break;
+                    case 2:opponentsTurn(player, opponent); break;
+                    case 3: {playersTurn(player, opponent); playerPicksCards = true; numberOfCardsToPick = 2; }; break;
+                    case 4: {unoTable.setCurrentColor(opponent.pickColor()); playersTurn(player, opponent); }; break;
+                    case 5: {unoTable.setCurrentColor(opponent.pickColor()); playersTurn(player, opponent); playerPicksCards = true; numberOfCardsToPick = 4; }; break;
+                    }
+                }
+            }
+        }
+        if (Mouse::isButtonPressed(Mouse::Left)) {
+            sf::Vector2f playPos = { (float)Mouse::getPosition().x,(float)Mouse::getPosition().y };
+            Sleep(500);
+            if (unoTable.hiddenCardDeck.getGlobalBounds().contains(playPos.x, playPos.y)) {
+                temp = unoTable.takeCard();
+                //setCardParameters(unoTable.takeCard(), temp);
+                player.addCard(temp);
+            }
+            if (player.getTurn() == true) {
+
+                if (playerPicksColor == true) {
+                    if (colorsToPick.at(0).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                        unoTable.setCurrentColor("red");
+                    }
+                    else if (colorsToPick.at(1).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                        unoTable.setCurrentColor("green");
+                    }
+                    else if (colorsToPick.at(2).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                        unoTable.setCurrentColor("yellow");
+                    }
+                    else if (colorsToPick.at(3).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                        unoTable.setCurrentColor("blue");
+                    }
+
+                    playerPicksColor = false;
+                    if (opponentPicksCards == true)
+                        opponentsTurn(player, opponent);
+                    else
+                        opponentsTurn(player, opponent);
+                }
+                else if (playerPicksCards == true) {
+                    temp = unoTable.takeCard();
+                    //setCardParameters(unoTable.takeCard(), temp);
+                    player.addCard(temp);
+                    numberOfCardsToPick--;
+                    if (numberOfCardsToPick == 0) {
+                        playerPicksCards = false;
+                        opponentsTurn(player, opponent);
+                    }
+                    else
+                        playersTurn(player, opponent);
+                }
+                else {
+                    temp = player.pushCard(playPos);
+                    //setCardParameters(player.pushCard(playPos), temp);
+                    unoTable.setCurrentCard(temp);
+                    opponent.setCardToBeat(temp);
+                    itemOfcard = player.checkForOtherThanNumberCard();
+                    switch (itemOfcard) {
+                    case 0:break; break;
+                    case 1:playersTurn(player, opponent); break;
+                    case 2:playersTurn(player, opponent); break;
+                    case 3: {opponentsTurn(player, opponent); opponentPicksCards = true; numberOfCardsToPick = 2; }; break;
+                    case 4: {playersTurn(player, opponent); playerPicksColor = true; }; break;
+                    case 5: {playerPicksColor = true; playersTurn(player, opponent); opponentPicksCards = true; numberOfCardsToPick = 4; }; break;
+                    }
+                }
+            }
+        }
+        player.changeColorForTurn();
+        opponent.changeColorForTurn();
+        window.clear();
+        window.draw(bg);
+        unoTable.showAllElements(window);
+        player.showElements(window);
+        opponent.showElements(window);
+        for (int i = 0; i < 4; i++) {
+            window.draw(colorsToPick.at(i));
+        }
+        window.display();
+    }
+    startCardsDeck2.clear();
+    startCardsDeck.clear();
+    colorsToPick.clear();
 }

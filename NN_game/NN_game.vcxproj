@@ -141,6 +141,7 @@
     <ClCompile Include="Music.cpp" />
     <ClCompile Include="NN_game.cpp" />
     <ClCompile Include="Piece.cpp" />
+    <ClCompile Include="Uno.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BattleShip.h" />
@@ -150,6 +151,7 @@
     <ClInclude Include="Hangman.h" />
     <ClInclude Include="Music.h" />
     <ClInclude Include="Piece.h" />
+    <ClInclude Include="Uno.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

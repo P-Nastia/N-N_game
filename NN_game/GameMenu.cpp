@@ -58,6 +58,7 @@ void GameMenu::moveDown() {
 	menuItemSelected++;
 	if (menuItemSelected <= maxNumOfItems) {
 		menuItems[menuItemSelected - 1].setFillColor(itemColor);
+
 		menuItems[menuItemSelected].setFillColor(pickedItemColor);
 	}
 	else {
