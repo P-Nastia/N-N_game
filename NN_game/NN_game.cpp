@@ -1932,11 +1932,10 @@ class UnoGame : public Strategy
                             case 0:opponentsTurn(player, opponent); break;
                             case 1:playersTurn(player, opponent); break;
                             case 2:playersTurn(player, opponent); break;
-                            case 3: {playersTurn(player, opponent); for (int i = 0; i < 2; i++) { setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); opponent.resizeHiddenCards(); } }; break;
+                            case 3: {playersTurn(player, opponent); for (int i = 0; i < 2; i++) { setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); } }; break;
                             case 4: {playersTurn(player, opponent); playerPicksColor = true; }; break;
                             case 5: {playerPicksColor = true; playersTurn(player, opponent); for (int i = 0; i < 4; i++) {
-                                setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); opponent.resizeHiddenCards();
-                            } }; break;
+                                setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); } }; break;
                             }
                         }
                         if (player.isEmpty() == true) {
@@ -1989,7 +1988,6 @@ class UnoGame : public Strategy
                 else {
                     setCardParameters(unoTable.takeCard(), temp);
                     opponent.addCard(temp);
-                    opponent.resizeHiddenCards();
                     playersTurn(player, opponent);
                 }
                 if (opponent.isEmpty() == true) {
