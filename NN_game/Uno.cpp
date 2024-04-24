@@ -36,9 +36,6 @@ Uno::Uno(string fileName)
             countCards++;
         }
     }
-    /*for (int i = 0; i < 108; i++) {
-        cout << cardDeck.at(i).symbol << ":" << cardDeck.at(i).color << endl;
-    }*/
     //встановлюємо першу карту, з якої буде починатися гра
     currentColor.setRadius(17);
     currentColor.setOutlineThickness(4);
@@ -104,7 +101,6 @@ void Uno::setCurrentCard(unoCards card)
 {
     currentCard.color = card.color;
     currentCard.sprite.setTextureRect(card.sprite.getTextureRect());
-    //currentCard.sprite = card.sprite;
     currentCard.symbol = card.symbol;
     setCurrentColor(currentCard.color);
 }

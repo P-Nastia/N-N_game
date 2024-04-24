@@ -49,7 +49,6 @@ inline void Setup(sf::RenderWindow& window, Piece* RedPieces, Piece* WhitePieces
             RedPieces[m].y = 7 - i;
             m++;
         }
-
     }
 }
 

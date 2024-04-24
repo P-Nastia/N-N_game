@@ -20,14 +20,15 @@ using namespace sf;
 #include "Piece.h"
 #include "Uno.h"
 
-void showHangManRules(RenderWindow& rules, int width, int height);
-void mainMenuStart(RenderWindow& mainWindow, int width, int height);
-void hangmanMenu(RenderWindow& hangmanMenu, int width, int height);
-//void battleShipMenu(RenderWindow& bsWindow, int width, int height);
-void startBattleship(RenderWindow& window, int width, int height);
-//int checkersMenu(RenderWindow& window, int width, int height);
-int startCheckers();
-void startUno(RenderWindow& window, int width, int height);
+//int startCheckers(RenderWindow& mainWindow, int width, int height);
+void enemiesTurn(gameText& text, BattleShip& enemy, BattleShip& player);
+void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player);
+void setCardParameters(unoCards from, unoCards& to);
+void playersTurn(Player& player, Opponent& opponent);
+void opponentsTurn(Player& player, Opponent& opponent);
+void ClientCode(RenderWindow& mainWindow, int width, int height);
+
+
 namespace snake {
    
     // Типи клітинок на ігровому полі
@@ -510,8 +511,9 @@ namespace snake {
         }
     }
 
-    int main()
+    int main(RenderWindow& Window, int width, int height)
     {
+        Window.close();
         init_game();
 
         sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
@@ -526,8 +528,11 @@ namespace snake {
             {
                 if (event.type == sf::Event::Closed) {
                     snake_direction_queue.clear();
-                    //mainMenuStart(mainWindow, width, height);
                     window.close();
+                    Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                    float width = VideoMode::getDesktopMode().width;
+                    float height = VideoMode::getDesktopMode().height;
+                    ClientCode(Window, width, height);
                 }
                 if (event.type == sf::Event::KeyPressed) {
                     if (game_paused) {
@@ -563,9 +568,11 @@ namespace snake {
                                         current_settings_menu_item_index = 0;
                                     }
                                     if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_QUIT) {
-                                        //mainMenuStart(window, width, height);
                                         window.close();
-                                        
+                                        Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                                        float width = VideoMode::getDesktopMode().width;//ширина екрана
+                                        float height = VideoMode::getDesktopMode().height;//висота екрана
+                                        ClientCode(Window, width, height);
                                     }
                                     break;
                                 case sf::Keyboard::Escape:
@@ -755,7 +762,7 @@ namespace ticTacToe {
         char xod;
     };
 
-    void start_game(); /*Відображає стартове меню гри та визначає послідовність виклику функцій залежно від типу гри*/
+    void start_game(RenderWindow& window, int width, int height); /*Відображає стартове меню гри та визначає послідовність виклику функцій залежно від типу гри*/
     void setup(int*, bool*); /*Функція ініціалізації прапорних змінних*/
     void type_symbol(bool*, char*, char*, int); /*Функція рандомно визначає хто гратиме за X а хтось за O*/
     void clear_field(); /*Функція очищує ігрові поля*/
@@ -770,25 +777,26 @@ namespace ticTacToe {
     void smart_learn(Stack*, int, int, DataBase*); /*Рекурсивна функція навчання, зменшує вагу ходу у разі програшу, і збільшує навпаки, нічия нейтрально*/
 
     void display_statistic(RenderWindow&, int, int, int); /*Виводить статистику*/
-    void menu_graph(RenderWindow&, int*, Event, bool game_over = false); /*Виводить меню гри*/
+    void menu_graph(RenderWindow& window, RenderWindow& Window, int width, int height, int* type_game, Event event, bool game_over = false); /*Виводить меню гри*/
     void display_field(RenderWindow&, char, char, bool game_over = false); /*Виводить ігрову підлогу*/
     int move_human(RenderWindow&); /*Повертає перебіг людини*/
     void wins_victory(RenderWindow&, Wins*); /*Виводить смугу при перемозі*/
     void progress_bar(RenderWindow&, int); /*Виводить ProgressBar під час навчання Smart*/
 
-    int main()
+    int main(RenderWindow& window, int width, int height)
     {
+        window.close();
         setlocale(0, "");
         srand(unsigned(time(0)));
 
-        start_game();
+        start_game(window, width, height);
 
         delete[] Collections_X;
         delete[] Collections_O;
         return 0;
     }
 
-    void start_game()
+    void start_game(RenderWindow& Window, int width, int height)
     {
         RenderWindow window(VideoMode(800, 600), L"Tic-Tac-Teo AI");
         Image icon;
@@ -816,8 +824,10 @@ namespace ticTacToe {
             while (window.pollEvent(event))
             {
                 if (event.type == Event::Closed) {
-                    //mainMenuStart(mainWindow, width, height);
-                    window.close();
+                    window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                    float width = VideoMode::getDesktopMode().width;//ширина екрана
+                    float height = VideoMode::getDesktopMode().height;//висота екрана
+                    ClientCode(Window, width, height);
                 }
             }
             if (type_game == 0)
@@ -829,7 +839,7 @@ namespace ticTacToe {
                     display_field(window, player_1, player_2, game_over);
                     wins_victory(window, Win);
                 }
-                menu_graph(window, &type_game, event, game_over);
+                menu_graph(window, Window,width,height,&type_game, event, game_over);
                 display_statistic(window, x_wins, o_wins, d_wins);
                 window.display();
                 if (type_game == 1 || type_game == 2)
@@ -1318,7 +1328,8 @@ namespace ticTacToe {
         window.draw(text_7); window.draw(text_8);
     }
 
-    void menu_graph(RenderWindow& window, int* type_game, Event event, bool game_over)
+    /////////////////////////
+    void menu_graph(RenderWindow& window, RenderWindow& Window,int width,int height, int* type_game, Event event, bool game_over)
     {
         Texture logo;
         Sprite spritelogo;
@@ -1377,7 +1388,10 @@ namespace ticTacToe {
         {
             menu_4.setFillColor(Color::Black);
             if (event.type == Event::MouseButtonReleased)
-                if (event.mouseButton.button == Mouse::Left) window.close();
+                if (event.mouseButton.button == Mouse::Left) { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+            float width = VideoMode::getDesktopMode().width;//ширина екрана
+            float height = VideoMode::getDesktopMode().height;//висота екрана
+            ClientCode(Window, width, height); }
         }
 
         window.draw(menu_0); window.draw(menu_1);
@@ -1601,17 +1615,8 @@ namespace ticTacToe {
     }
 }
 
-void setText(Text& menuText, float xPos, float yPos, String str, int fontSize = 60,
-    Color menuTextColor = Color::White, int bord = 0, Color borderColor = Color::Black)//bord = обрамлення тексту
-{
-    menuText.setCharacterSize(fontSize);
-    menuText.setPosition(xPos, yPos);
-    menuText.setString(str);
-    menuText.setFillColor(menuTextColor);
-    menuText.setOutlineThickness(bord);
-    menuText.setOutlineColor(borderColor);
-}
 
+///////////////////////////////
 
 auto coordsForOpponent(multimap<int, int>& map, int pos) {
     int count = 0;
@@ -1623,104 +1628,132 @@ auto coordsForOpponent(multimap<int, int>& map, int pos) {
         }
     }
 }
-
-int main()
+void setText(Text& menuText, float xPos, float yPos, String str, int fontSize = 60,
+    Color menuTextColor = Color::White, int bord = 0, Color borderColor = Color::Black)//bord = обрамлення тексту
 {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
-    RenderWindow mainWindow;
-    mainWindow.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-    float width = VideoMode::getDesktopMode().width;//ширина екрана
-    float height = VideoMode::getDesktopMode().height;//висота екрана
-    mainMenuStart(mainWindow, width, height);
+    menuText.setCharacterSize(fontSize);
+    menuText.setPosition(xPos, yPos);
+    menuText.setString(str);
+    menuText.setFillColor(menuTextColor);
+    menuText.setOutlineThickness(bord);
+    menuText.setOutlineColor(borderColor);
 }
+void startHangman(string hmType, RenderWindow& window, int width, int height);
 
-void enemiesTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
-    player.setTurn(false);
-    enemy.setTurn(true);
-    text.setString("Wait until opponent takes turn");
-}
-void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
-    player.setTurn(true);
-    enemy.setTurn(false);
-    text.setString("Your turn");
-}
-//винесла за функцію startBattleship(), щоби не було помилки ... consider moving some data to heap
-BattleShip player("player");
-BattleShip enemy("enemy");
+///////////////////////////////////
+class Strategy
+{
+public:
+    virtual ~Strategy() {}
+    virtual void DoAlgorithm(RenderWindow& window, int width, int height) const = 0;
+};
 
-void startBattleship(RenderWindow& window, int width, int height) {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
-    srand(time(NULL));
-    /*BattleShip player("player");
-    BattleShip enemy("enemy");*/
-    RectangleShape bg(Vector2f(VideoMode::getDesktopMode().width, VideoMode::getDesktopMode().height));
-    Texture bgTexture;
-    bgTexture.loadFromFile("battleship/paper.jpg");
-    bg.setTexture(&bgTexture);
-    gameText textForShots(" ", "fonts/LeagueSpartan-Bold.ttf");
-    gameText textForTurn(" ", "fonts/LeagueSpartan-Bold.ttf");
-    gameText grid("Your grid                                                                                                                                            opponent`s grid", "Fonts/LeagueSpartan-Bold.ttf");
-    grid.setFontsize(15);
-    grid.setColor(Color::Black);
-    int num = rand() % 2;
-    if (num == 0) {
-        playersTurn(textForTurn, enemy, player);
+
+class Context
+{
+private:
+    Strategy* strategy_;
+public:
+    Context(Strategy* strategy = nullptr) : strategy_(strategy)
+    {
     }
-    else {
-        enemiesTurn(textForTurn, enemy, player);
+    ~Context()
+    {
+        delete this->strategy_;
     }
-    multimap<int, int> shotsForBot;//всі можливі ходи для бота
-    for (int x = 0; x < 10; x++) {
-        for (int y = 0; y < 10; y++) {
-            shotsForBot.emplace(x, y);
+    void set_strategy(Strategy* strategy)
+    {
+        delete this->strategy_;
+        this->strategy_ = strategy;
+    }
+    void DoSomeBusinessLogic(RenderWindow& mainWindow, int width, int height) const
+    {
+        this->strategy_->DoAlgorithm(mainWindow, width, height);
+    }
+};
+
+class BattleShipGame : public Strategy
+{
+public:
+
+    void DoAlgorithm(RenderWindow& window, int width, int height) const override
+    {
+        SetConsoleCP(1251);
+        SetConsoleOutputCP(1251);
+        srand(time(NULL));
+        BattleShip player("player");
+        BattleShip enemy("enemy");
+        RectangleShape bg(Vector2f(VideoMode::getDesktopMode().width, VideoMode::getDesktopMode().height));
+        Texture bgTexture;
+        bgTexture.loadFromFile("battleship/paper.jpg");
+        bg.setTexture(&bgTexture);
+        gameText textForShots(" ", "Fonts/LeagueSpartan-Bold.ttf");
+        gameText textForTurn(" ", "Fonts/LeagueSpartan-Bold.ttf");
+        gameText grid("Your grid                                                                                                                                            opponent`s grid", "Fonts/LeagueSpartan-Bold.ttf");
+        grid.setFontsize(15);
+        grid.setColor(Color::Black);
+        int num = rand() % 2;
+        if (num == 0) {
+            playersTurn(textForTurn, enemy, player);
         }
-    }
-    int x, y;
-    int playerX, playerY;
-    int countOfDestroyed_by_player = 0, countOfDestroyed_by_opponent = 0;
-    pair<int, int> p;//пара, куди будуть вертатися координати з coordsForOpponent
-    int shotsCount = 100;//кількфсть всіх ходів
-    gameText playerShoot(to_string(countOfDestroyed_by_player) + "/10", "fonts/LeagueSpartan-Bold.ttf");
-    playerShoot.setFontsize(40);
-    playerShoot.setColor(Color::Black);
-    gameText opponentShoot(to_string(countOfDestroyed_by_opponent) + "/10", "fonts/LeagueSpartan-Bold.ttf");
-    opponentShoot.setFontsize(40);
-    opponentShoot.setColor(Color::Black);
-    while (window.isOpen()) {
-        Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) window.close();
-            if (event.type == Event::KeyReleased) {
-
+        else {
+            enemiesTurn(textForTurn, enemy, player);
+        }
+        multimap<int, int> shotsForBot;//всі можливі ходи для бота
+        for (int x = 0; x < 10; x++) {
+            for (int y = 0; y < 10; y++) {
+                shotsForBot.emplace(x, y);
             }
         }
-        if (enemy.isMyTurn() == true) {
-            num = rand() % shotsCount;
-            p = coordsForOpponent(shotsForBot, num);
-            x = p.first;
-            y = p.second;
-            if ((x >= 0 && x <= 9) && (y >= 0 && y <= 9)) {
-                shotsCount--;
-                auto it = find_if(//лямбда, щоб видалити пару з multimap
-                    shotsForBot.begin(), shotsForBot.end(), [&](const auto& pair) {
-                        return pair.first == x
-                        && pair.second == y;
-                    });
+        int x, y;
+        int playerX, playerY;
+        int countOfDestroyed_by_player = 0, countOfDestroyed_by_opponent = 0;
+        pair<int, int> p;//пара, куди будуть вертатися координати з coordsForOpponent
+        int shotsCount = 100;//кількфсть всіх ходів
+        gameText playerShoot(to_string(countOfDestroyed_by_player) + "/10", "Fonts/LeagueSpartan-Bold.ttf");
+        playerShoot.setFontsize(40);
+        playerShoot.setColor(Color::Black);
+        gameText opponentShoot(to_string(countOfDestroyed_by_opponent) + "/10", "Fonts/LeagueSpartan-Bold.ttf");
+        opponentShoot.setFontsize(40);
+        opponentShoot.setColor(Color::Black);
+        while (window.isOpen()) {
+            Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == Event::Closed) window.close();
+                if (event.type == Event::KeyReleased) {
 
-                if (it != shotsForBot.end()) {
-                    shotsForBot.erase(it);
                 }
-                Sleep(1000);
-                if (player.checkForCorrectness(x, y, window) == true) {
-                    enemiesTurn(textForTurn, enemy, player);
-                    if (player.checkForCompleteness(x, y) == true) {
-                        countOfDestroyed_by_opponent++;
-                        opponentShoot.setString(to_string(countOfDestroyed_by_opponent) + "/10");
-                        textForShots.setString(" ");
+            }
+            if (enemy.isMyTurn() == true) {
+                num = rand() % shotsCount;
+                p = coordsForOpponent(shotsForBot, num);
+                x = p.first;
+                y = p.second;
+                if ((x >= 0 && x <= 9) && (y >= 0 && y <= 9)) {
+                    shotsCount--;
+                    auto it = find_if(//лямбда, щоб видалити пару з multimap
+                        shotsForBot.begin(), shotsForBot.end(), [&](const auto& pair) {
+                            return pair.first == x
+                            && pair.second == y;
+                        });
+
+                    if (it != shotsForBot.end()) {
+                        shotsForBot.erase(it);
+                    }
+                    Sleep(1000);
+                    if (player.checkForCorrectness(x, y, window) == true) {
+                        enemiesTurn(textForTurn, enemy, player);
+                        if (player.checkForCompleteness(x, y) == true) {
+                            countOfDestroyed_by_opponent++;
+                            opponentShoot.setString(to_string(countOfDestroyed_by_opponent) + "/10");
+                            textForShots.setString(" ");
+                        }
+                        else {
+                            textForShots.setString(" ");
+                        }
                     }
                     else {
+                        playersTurn(textForTurn, enemy, player);
                         textForShots.setString(" ");
                     }
                 }
@@ -1729,126 +1762,414 @@ void startBattleship(RenderWindow& window, int width, int height) {
                     textForShots.setString(" ");
                 }
             }
-            else {
-                playersTurn(textForTurn, enemy, player);
-                textForShots.setString(" ");
-            }
-        }
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            sf::Vector2i playPos = { (int)((Mouse::getPosition().x / 58) - 18),(int)((Mouse::getPosition().y / 58) - 4) };
-            playerX = playPos.x;
-            playerY = playPos.y;
-            if (enemy.checkForRepiteness(playerX, playerY) == true) {
-                textForTurn.setString("Pick other coordinates");
-            }
-            else {
-                if (enemy.checkForCorrectness(playerX, playerY, window) == true) {
-                    playersTurn(textForTurn, enemy, player);
-                    if (enemy.checkForCompleteness(playerX, playerY) == true) {
-                        countOfDestroyed_by_player++;
-                        playerShoot.setString(to_string(countOfDestroyed_by_player) + "/10");
-                        textForShots.setString("Destroyed");
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+                sf::Vector2i playPos = { (int)((Mouse::getPosition().x / 58) - 18),(int)((Mouse::getPosition().y / 58) - 4) };
+                playerX = playPos.x;
+                playerY = playPos.y;
+                if (enemy.checkForRepiteness(playerX, playerY) == true) {
+                    textForTurn.setString("Pick other coordinates");
+                }
+                else {
+                    if (enemy.checkForCorrectness(playerX, playerY, window) == true) {
+                        playersTurn(textForTurn, enemy, player);
+                        if (enemy.checkForCompleteness(playerX, playerY) == true) {
+                            countOfDestroyed_by_player++;
+                            playerShoot.setString(to_string(countOfDestroyed_by_player) + "/10");
+                            textForShots.setString("Destroyed");
+                        }
+                        else {
+                            textForShots.setString("Hit");
+                        }
                     }
                     else {
-                        textForShots.setString("Hit");
+                        enemiesTurn(textForTurn, enemy, player);
+                        textForShots.setString("Missed");
+                    }
+                }
+            }
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+                ClientCode(window, width, height);
+            }
+
+            window.clear();
+            window.draw(bg);
+
+            grid.showString(window, 470, 840);
+            if (textForTurn.str.length() < 10) {
+                textForTurn.showString(window, 770, 15);
+            }
+            else {
+                textForTurn.showString(window, 530, 15);
+            }
+            if (textForShots.str.length() < 10) {
+                textForShots.showString(window, 810, 90);
+            }
+            else {
+                textForShots.showString(window, 570, 90);
+            }
+            playerShoot.showString(window, 1800, 20);
+            opponentShoot.showString(window, 30, 20);
+            player.showCoords(window);
+            enemy.showCoords(window);
+            player.showField(window);
+            enemy.showField(window);
+            if (countOfDestroyed_by_opponent == 10 && countOfDestroyed_by_player < 10) {
+                gameText opponentWin("You lost. Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
+                opponentWin.setColor(Color::Black);
+                opponentWin.setFontsize(100);
+                opponentWin.showString(window, 500, 540);
+            }
+            else if (countOfDestroyed_by_player == 10 && countOfDestroyed_by_opponent < 10) {
+                gameText playerWin("You won !!! Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
+                playerWin.setColor(Color::Black);
+                playerWin.setFontsize(100);
+                playerWin.showString(window, 400, 540);
+            }
+            window.display();
+        }
+    }
+
+};
+class UnoGame : public Strategy
+{
+    void DoAlgorithm(RenderWindow& window, int width, int height) const override
+    {
+        RectangleShape bg(Vector2f(width, height));
+        Texture bgTexture;
+        bgTexture.loadFromFile("Uno/unoBG.jpg");
+        bg.setTexture(&bgTexture);
+        Uno unoTable("Uno/SymbolAndColor.txt");
+        Texture t;
+        t.loadFromFile("Uno/hiddenCard.png");
+        Sprite s;
+        s.setTexture(t);
+        vector<unoCards> startCardsDeck;
+        startCardsDeck.resize(7);
+        unoCards temp;
+
+        for (int i = 0; i < 7; i++) {
+            temp = unoTable.takeCard();
+            setCardParameters(temp, startCardsDeck.at(i));
+        }
+
+        vector<unoCards> startCardsDeck2;
+        startCardsDeck2.resize(7);
+
+
+        for (int i = 0; i < 7; i++) {
+            temp = unoTable.takeCard();
+            setCardParameters(temp, startCardsDeck2.at(i));
+        }
+
+        Opponent opponent(startCardsDeck2);
+        Player player(startCardsDeck);
+        vector<CircleShape> colorsToPick;
+        colorsToPick.resize(4);
+        for (int i = 0, yPos = 450; i < colorsToPick.size(); i++, yPos += 70) {
+            colorsToPick.at(i).setOutlineColor(Color::White);
+            colorsToPick.at(i).setOutlineThickness(4);
+            colorsToPick.at(i).setRadius(17);
+            colorsToPick.at(i).setPosition(Vector2f(1250, yPos));
+        }
+
+        colorsToPick.at(0).setFillColor(Color(255, 85, 85));
+        colorsToPick.at(1).setFillColor(Color(35, 177, 77));
+        colorsToPick.at(2).setFillColor(Color(255, 201, 13));
+        colorsToPick.at(3).setFillColor(Color(85, 85, 255));
+
+        bool opponentPicksColor = false;//чи потрібно тягнути карту супернику
+
+        bool playerPicksColor = false;// чи потрібно тягнути карту гравцю
+
+        int whoStarts = rand() % 2;
+        if (whoStarts == 0) {
+            playersTurn(player, opponent);
+        }
+        else {
+            cout << "opponent" << endl;
+            opponentsTurn(player, opponent);
+            setCardParameters(unoTable.getCurrentCard(), temp);
+            opponent.setCardToBeat(temp);
+        }
+        bool endOfGame = false;
+        int itemOfcard;//буде приходити цифра 0 -- якщо просто цифра на карті, 1 -- пропустити хід, 2 -- зміна напрямку ходу, 3 -- +2, 4 -- змінити колір, 5 -- +4 і змінити колір
+        gameText text;
+        while (window.isOpen()) {
+            Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == Event::Closed) window.close();
+                if (event.key.code == Keyboard::Escape) {
+                    ClientCode(window, width, height);
+                }
+                if (event.type == Event::MouseButtonPressed) {
+                    if (event.mouseButton.button == Mouse::Left && player.getTurn() == true) {
+                        sf::Vector2f playPos = { (float)Mouse::getPosition().x,(float)Mouse::getPosition().y };
+                        if (playerPicksColor == true) {
+                            if (colorsToPick.at(0).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                                unoTable.setCurrentColor("red");
+                            }
+                            else if (colorsToPick.at(1).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                                unoTable.setCurrentColor("green");
+                            }
+                            else if (colorsToPick.at(2).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                                unoTable.setCurrentColor("yellow");
+                            }
+                            else if (colorsToPick.at(3).getGlobalBounds().contains(playPos.x, playPos.y)) {
+                                unoTable.setCurrentColor("blue");
+                            }
+                            playerPicksColor = false;
+                            playersTurn(player, opponent);
+                        }
+                        else if (unoTable.hiddenCardDeck.getGlobalBounds().contains(playPos.x, playPos.y)) {
+                            setCardParameters(unoTable.takeCard(), temp);
+                            player.addCard(temp);
+                            opponentsTurn(player, opponent);
+                        }
+                        else {
+                            setCardParameters(player.pushCard(playPos), temp);
+                            unoTable.setCurrentCard(temp);
+                            opponent.setCardToBeat(temp);
+                            itemOfcard = player.checkForOtherThanNumberCard(temp);
+                            switch (itemOfcard) {
+                            case 0:opponentsTurn(player, opponent); break;
+                            case 1:playersTurn(player, opponent); break;
+                            case 2:playersTurn(player, opponent); break;
+                            case 3: {playersTurn(player, opponent); for (int i = 0; i < 2; i++) { setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); opponent.resizeHiddenCards(); } }; break;
+                            case 4: {playersTurn(player, opponent); playerPicksColor = true; }; break;
+                            case 5: {playerPicksColor = true; playersTurn(player, opponent); for (int i = 0; i < 4; i++) {
+                                setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); opponent.resizeHiddenCards();
+                            } }; break;
+                            }
+                        }
+                        if (player.isEmpty() == true) {
+                            window.clear(Color(178, 178, 178));
+                            text.setFontString("Fonts/LeagueSpartan-Bold.ttf");
+                            text.setString("You won!!! \n Press Escape to exit");
+                            text.setFontsize(100);
+                            text.setColor(Color::Black);
+                            text.showString(window, 700, 450);
+                            endOfGame = true;
+                        }
+                    }
+                }
+            }
+            window.clear();
+            if (endOfGame == true) {
+                text.showString(window, 700, 450);
+            }
+            window.draw(bg);
+            unoTable.showAllElements(window);
+            player.showElements(window);
+            opponent.showElements(window);
+            for (int i = 0; i < 4; i++) {
+                window.draw(colorsToPick.at(i));
+            }
+            window.display();
+            if (opponent.getTurn() == true && endOfGame == false) {
+                Sleep(1000);
+                if (opponentPicksColor == true) {
+                    unoTable.setCurrentColor(opponent.pickColor());
+                    opponentPicksColor = false;
+                    opponentsTurn(player, opponent);
+                }
+                setCardParameters(unoTable.getCurrentCard(), temp);
+                opponent.setCardToBeat(temp);
+                setCardParameters(opponent.pushCard(), temp);
+                if (temp.color != "notFound") {
+                    unoTable.setCurrentCard(temp);
+                    player.setCardToBeat(temp);
+                    itemOfcard = opponent.checkForOtherThanNumberCard(temp);
+                    switch (itemOfcard) {
+                    case 0:playersTurn(player, opponent); break;
+                    case 1:opponentsTurn(player, opponent); break;
+                    case 2:opponentsTurn(player, opponent); break;
+                    case 3: {opponentsTurn(player, opponent); for (int i = 0; i < 2; i++) { setCardParameters(unoTable.takeCard(), temp); player.addCard(temp); } }; break;
+                    case 4: {opponentsTurn(player, opponent); opponentPicksColor = true; }; break;
+                    case 5: {opponentPicksColor = true; opponentsTurn(player, opponent); for (int i = 0; i < 4; i++) { setCardParameters(unoTable.takeCard(), temp); player.addCard(temp); } }; break;
                     }
                 }
                 else {
-                    enemiesTurn(textForTurn, enemy, player);
-                    textForShots.setString("Missed");
+                    setCardParameters(unoTable.takeCard(), temp);
+                    opponent.addCard(temp);
+                    opponent.resizeHiddenCards();
+                    playersTurn(player, opponent);
+                }
+                if (opponent.isEmpty() == true) {
+                    text.setFontString("Fonts/LeagueSpartan-Bold.ttf");
+                    text.setString("You lost!!! \n Press Escape to exit");
+                    text.setFontsize(100);
+                    text.setColor(Color::Black);
+                    text.showString(window, 700, 450);
+                    endOfGame = true;
                 }
             }
+            window.clear();
+            if (endOfGame == true) {
+                text.showString(window, 700, 450);
+            }
+            window.draw(bg);
+            unoTable.showAllElements(window);
+            player.showElements(window);
+            opponent.showElements(window);
+            for (int i = 0; i < 4; i++) {
+                window.draw(colorsToPick.at(i));
+            }
+            window.display();
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            mainMenuStart(window, width, height);
-        }
-
-        window.clear();
-        window.draw(bg);
-
-        grid.showString(window, 470, 840);
-        if (textForTurn.str.length() < 10) {
-            textForTurn.showString(window, 770, 15);
-        }
-        else {
-            textForTurn.showString(window, 530, 15);
-        }
-        if (textForShots.str.length() < 10) {
-            textForShots.showString(window, 810, 90);
-        }
-        else {
-            textForShots.showString(window, 570, 90);
-        }
-        playerShoot.showString(window, 1800, 20);
-        opponentShoot.showString(window, 30, 20);
-        player.showCoords(window);
-        enemy.showCoords(window);
-        player.showField(window);
-        enemy.showField(window);
-        if (countOfDestroyed_by_opponent == 10 && countOfDestroyed_by_player < 10) {
-            gameText opponentWin("You lost. Press 'Escape'", "fonts/LeagueSpartan-Bold.ttf");
-            opponentWin.setColor(Color::Black);
-            opponentWin.setFontsize(100);
-            opponentWin.showString(window, 500, 540);
-        }
-        else if (countOfDestroyed_by_player == 10 && countOfDestroyed_by_opponent < 10) {
-            gameText playerWin("You won !!! Press 'Escape'", "fonts/LeagueSpartan-Bold.ttf");
-            playerWin.setColor(Color::Black);
-            playerWin.setFontsize(100);
-            playerWin.showString(window, 500, 540);
-        }
-        window.display();
+        colorsToPick.clear();
     }
-}
+};
 
-//void battleShipMenu(RenderWindow& bsWindow, int width, int height) {
-//    SetConsoleCP(1251);
-//    SetConsoleOutputCP(1251);
-//    //візуалізація меню
-//    RectangleShape mainBackground(Vector2f(width, height));//фон меню
-//    Texture windowTexture;
-//    windowTexture.loadFromFile("battleship/BSMenuBG.jpeg");
-//    mainBackground.setTexture(&windowTexture);
-//    //встановлюємо шрифт для навз категорій
-//    Font font;
-//    font.loadFromFile("fonts/LeagueSpartan-Bold.ttf");
-//    Text titulText;
-//    titulText.setFont(font);
-//    setText(titulText, 340, 90, "Battleship menu", 150, Color(60, 97, 223), 10);
-//    //використовуємо клас MainGameMenu
-//    String menuNames[] = { "Rules","Play", "Exit" };
-//    GameMenu menu(bsWindow, 950, 550, 3, menuNames, 100, 160);
-//    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
-//    //початок гри
-//    while (bsWindow.isOpen()) {
-//        Event event;
-//        while (bsWindow.pollEvent(event)) {
-//            if (event.type == Event::KeyReleased) {
-//                if (event.key.code == Keyboard::Up) {
-//                    menu.moveUp();
-//                }
-//                if (event.key.code == Keyboard::Down) {
-//                    menu.moveDown();
-//                }
-//                if (event.key.code == Keyboard::Enter) {
-//                    switch (menu.getMenuSelected()) {
-//                    case 0: { }; break;
-//                    case 1: { startBattleship(bsWindow, width, height); } break;
-//                    case 2: { mainMenuStart(bsWindow, width, height); }; break;
-//                    }
-//                }
-//            }
-//        }
-//        bsWindow.clear();
-//        bsWindow.draw(mainBackground);
-//        bsWindow.draw(titulText);
-//        menu.drawItems();
-//        bsWindow.display();
-//    }
-//}
+class HangmanMenu :public Strategy {
+public:
+    void DoAlgorithm(RenderWindow& window, int width, int height) const override {
+        //візуалізація меню
+        RectangleShape mainBackground(Vector2f(width, height));//фон меню
+        Texture windowTexture;
+        windowTexture.loadFromFile("Images/hangmanMenu.png");
+        mainBackground.setTexture(&windowTexture);
+        //встановлюємо шрифт для навз категорій
+        Font font;
+        font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
+        Text titulText;
+        titulText.setFont(font);
+        setText(titulText, 400, 80, "Hangman menu", 150, Color(1, 13, 65), 10);
+        //використовуємо клас MainGameMenu
+        String menuNames[] = { "Body parts","Sports","Proffesions", "Exit" };
+        GameMenu menu(window, 950, 550, 4, menuNames, 100, 100);
+        menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
+        //початок гри
 
-void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
-    //візуалізація меню
+        while (window.isOpen()) {
+            Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == Event::KeyReleased) {
+                    if (event.key.code == Keyboard::Up) {
+                        menu.moveUp();
+                    }
+                    if (event.key.code == Keyboard::Down) {
+                        menu.moveDown();
+                    }
+                    if (event.key.code == Keyboard::Enter) {
+                        switch (menu.getMenuSelected()) {
+                        case 0: {startHangman("bodyParts.txt", window, width, height); }break;
+                        case 1: {startHangman("sports.txt", window, width, height); }break;
+                        case 2: {startHangman("proffesions.txt", window, width, height); }break;
+                        case 3: {ClientCode(window, width, height); } break;
+                        }
+                    }
+                }
+            }
+            window.clear();
+            window.draw(mainBackground);
+            window.draw(titulText);
+            menu.drawItems();
+            window.display();
+        }
+    }
+};
+
+class Checkers :public Strategy {
+public:
+    void DoAlgorithm(RenderWindow& Window, int width, int height) const override {
+        Window.close();
+        ContextSettings settings;
+        settings.antialiasingLevel = 16.0;
+        Event event;
+        Board board;
+        int grid[8][8];
+        Piece RedPieces[12];
+        Piece WhitePieces[12];
+        bool selected = false;
+        Piece* SelectedPiece = NULL;
+        int turn = 1;
+        VideoMode desktop = VideoMode::getDesktopMode();
+
+        RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
+
+        for (int i = 0; i < 12; i++) {
+            WhitePieces[i].color = Color::White;
+            RedPieces[i].color = Color::Red;
+        }
+
+        Setup(window, RedPieces, WhitePieces);
+
+        while (window.isOpen()) {
+            while (window.pollEvent(event)) {
+                if (event.type == Event::Closed) {
+                    window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                    float width = VideoMode::getDesktopMode().width;//ширина екрана
+                    float height = VideoMode::getDesktopMode().height;//висота екрана
+                    ClientCode(Window, width, height);
+                }
+                if (event.type == Event::MouseButtonReleased) {
+                    if (event.mouseButton.button == Mouse::Left) {
+                        selected = !selected;
+                    }
+                }
+            }
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+                { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                float width = VideoMode::getDesktopMode().width;//ширина екрана
+                float height = VideoMode::getDesktopMode().height;//висота екрана
+                ClientCode(Window, width, height); }
+            }
+            window.clear();
+
+            board.Draw(window);
+
+            int tileSize = window.getSize().x / board.size;
+
+            if (turn == 2) {
+                // Виклик функції AI гравця
+                AIPlayer(WhitePieces, RedPieces, turn);
+            }
+
+            if (SelectedPiece != NULL) {
+                board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
+            }
+
+            for (int i = 0; i < 12; i++) {
+                WhitePieces[i].Draw(window);
+                RedPieces[i].Draw(window);
+            }
+
+            if (selected) {
+                int x = Mouse::getPosition(window).x / 75;
+                int y = Mouse::getPosition(window).y / 75;
+                if (FindPiece(x, y, RedPieces, WhitePieces) && (FindPiece(x, y, RedPieces, WhitePieces)->color == Color::Red && turn == 1 || FindPiece(x, y, RedPieces, WhitePieces)->color == Color::White && turn == 2)) {
+                    if (FindPiece(x, y, RedPieces, WhitePieces) == SelectedPiece) {
+                        SelectedPiece = NULL;
+                    }
+                    else {
+                        SelectedPiece = FindPiece(x, y, RedPieces, WhitePieces);
+                    }
+
+                    selected = false;
+                }
+                else if (SelectedPiece != NULL && MovePiece(x, y, SelectedPiece, RedPieces, WhitePieces, &turn)) {
+                    selected = false;
+                    SelectedPiece = NULL;
+                }
+                selected = false;
+            }
+            for (int i = 0; i < 12; i++) {
+                if (RedPieces[i].y == 0) {
+                    RedPieces[i].isKing = true;
+                }
+                if (WhitePieces[i].y == 7) {
+                    WhitePieces[i].isKing = true;
+                }
+            }
+            window.display();
+        }
+    }
+};
+
+void ClientCode(RenderWindow& mainWindow, int width, int height)
+{
+    ::Context* context = new ::Context();
+
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
     windowTexture.loadFromFile("Images/mainMenuBg.jpg");
@@ -1858,9 +2179,9 @@ void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
     font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
     Text titulText;
     titulText.setFont(font);
-    setText(titulText, 480, 50, "Game menu", 150, Color(1, 13, 65), 10);
+    setText(titulText, 480, 50, "Minimetropolis", 150, Color(1, 13, 65), 10);
     //використовуємо клас MainGameMenu
-    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Checkers","Uno","Exit game" };//потім додамо ще назви
+    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Checkers","Uno","Exit game" };
     GameMenu menu(mainWindow, 950, 350, 7, menuNames, 80, 100);
     menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
     //початок гри
@@ -1873,244 +2194,107 @@ void mainMenuStart(RenderWindow& mainWindow, int width, int height) {
                 }
                 if (event.key.code == Keyboard::Down) {
                     menu.moveDown();
+
                 }
                 if (event.key.code == Keyboard::Enter) {
                     switch (menu.getMenuSelected()) {
-                    case 0: {ticTacToe::main(); }; break;
-                    case 1:hangmanMenu(mainWindow, width, height); break;
-                    case 2: {snake::main(); }; break;
-                    case 3:startBattleship(mainWindow, width, height); break;
-                    case 4:startCheckers(); break;
-                    case 5:startUno(mainWindow, width, height); break;
+                    case 0: {ticTacToe::main(mainWindow, width, height); }; break;
+                    case 1: {context->set_strategy(new HangmanMenu); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
+                    case 2: {snake::main(mainWindow, width, height); }; break;
+                    case 3: {context->set_strategy(new BattleShipGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
+                    case 4: {context->set_strategy(new Checkers); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
+                    case 5: {context->set_strategy(new UnoGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 6: mainWindow.close(); break;
                     }
                 }
             }
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+                mainWindow.close(); break;
+            }
+            mainWindow.clear();
+            mainWindow.draw(mainBackground);
+            mainWindow.draw(titulText);
+            menu.drawItems();
+            mainWindow.display();
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            mainWindow.close();
-        }
-        mainWindow.clear();
-        mainWindow.draw(mainBackground);
-        mainWindow.draw(titulText);
-        menu.drawItems();
-        mainWindow.display();
     }
+    delete context;
 }
-void showHangManRules(RenderWindow& rules, int width, int height) {
-    RectangleShape rulesBg(Vector2f(1920, 1080));//фон меню
-    Texture windowTexture;
-    windowTexture.loadFromFile("HangMan/hangmanRules.png");
-    rulesBg.setTexture(&windowTexture);
-    while (rules.isOpen())
+
+
+int main()
+{
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    RenderWindow mainWindow;
+    mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu", Style::Fullscreen);
+    float width = VideoMode::getDesktopMode().width;//ширина екрана
+    float height = VideoMode::getDesktopMode().height;//висота екрана
+    ClientCode(mainWindow, width, height);
+}
+
+
+void enemiesTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
+    player.setTurn(false);
+    enemy.setTurn(true);
+    text.setString("Wait until opponent takes turn");
+}
+void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
+    player.setTurn(true);
+    enemy.setTurn(false);
+    text.setString("Your turn");
+}
+
+
+void startHangman(string hmType, RenderWindow& window, int width, int height) {
+    Hangman hangmanGame(hmType);
+    while (window.isOpen())
     {
         Event event_opt;
-        while (rules.pollEvent(event_opt))
+        while (window.pollEvent(event_opt))
         {
-            if (event_opt.type == Event::Closed) rules.close();
+            if (event_opt.type == Event::Closed) ClientCode(window, width, height);
             if (event_opt.type == Event::KeyPressed)
             {
                 if (event_opt.key.code == Keyboard::Escape) {
-                    hangmanMenu(rules, width, height);
+                    ClientCode(window, width, height);
                 }
-            }
-        }
-        rules.clear();
-        rules.draw(rulesBg);
-        rules.display();
-    }
-}
-
-void hangmanMenu(RenderWindow& hangmanMenu, int width, int height) {
-    //візуалізація меню
-    RectangleShape mainBackground(Vector2f(width, height));//фон меню
-    Texture windowTexture;
-    windowTexture.loadFromFile("Images/hangmanMenu.png");
-    mainBackground.setTexture(&windowTexture);
-    //встановлюємо шрифт для навз категорій
-    Font font;
-    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
-    Text titulText;
-    titulText.setFont(font);
-    setText(titulText, 400, 80, "Hangman menu", 150, Color(1, 13, 65), 10);
-    //використовуємо клас MainGameMenu
-    String menuNames[] = { "Body parts","Sports","Proffesions", "Exit" };
-    GameMenu menu(hangmanMenu, 950, 550, 4, menuNames, 100, 100);
-    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
-    //початок гри
-
-    while (hangmanMenu.isOpen()) {
-        Event event;
-        while (hangmanMenu.pollEvent(event)) {
-            if (event.type == Event::KeyReleased) {
-                if (event.key.code == Keyboard::Up) {
-                    menu.moveUp();
+                if (event_opt.key.code == Keyboard::Right) {
+                    hangmanGame.moveRight();
                 }
-                if (event.key.code == Keyboard::Down) {
-                    menu.moveDown();
+                if (event_opt.key.code == Keyboard::Left) {
+                    hangmanGame.moveLeft();
                 }
-                if (event.key.code == Keyboard::Enter) {
-                    switch (menu.getMenuSelected()) {
-                    case 0: {Hangman hm("bodyParts.txt");
-                        hm.startGame(); }break;
-                    case 1: {Hangman hm("sports.txt");
-                        hm.startGame(); }; break;
-                    case 2: {Hangman hm("proffesions.txt");
-                        hm.startGame(); }; break;
-                    case 3: {
-                        mainMenuStart(hangmanMenu, width, height);
-                    } break;
+                if (event_opt.key.code == Keyboard::Enter) {
+                    if (hangmanGame.checkForCorrectness() == true) {
+                        hangmanGame.selectedCorrectly();
+                        hangmanGame.music.setMusic("music_right.wav");
+                        hangmanGame.showLetter(hangmanGame.alphabetLetters[hangmanGame.selectedLetter]);
+                    }
+                    else {
+                        hangmanGame.selectedWrongly();
+                        hangmanGame.music.setMusic("music_wrong.wav");
+                        hangmanGame.loseCounter++;
                     }
                 }
+                if (event_opt.key.code == Keyboard::Add)
+                    hangmanGame.music.VolumeUp();
+                if (event_opt.key.code == Keyboard::Subtract)
+                    hangmanGame.music.VolumeDown();
+                if (event_opt.key.code == Keyboard::Space)
+                    hangmanGame.showElements(window);
             }
-        }
-        hangmanMenu.clear();
-        hangmanMenu.draw(mainBackground);
-        hangmanMenu.draw(titulText);
-        menu.drawItems();
-        hangmanMenu.display();
-    }
-}
-
-//int checkersMenu(RenderWindow& window, int width, int height) {
-//    
-//    RectangleShape mainBackground(Vector2f(width, height));//фон меню
-//    Texture windowTexture;
-//    windowTexture.loadFromFile("Texture/fonMenu.jpg");
-//    mainBackground.setTexture(&windowTexture);
-//    //встановлюємо шрифт для навз категорій
-//    Font font;
-//    font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
-//    Text titulText;
-//    titulText.setFont(font);
-//    setText(titulText, 480, 50, "Game menu", 150, Color(1, 13, 65), 10);
-//    //використовуємо клас MainGameMenu
-//    String menuNames[] = { "Play", "Exit" };//потім додамо ще назви
-//    GameMenu menu(window, 950, 550, 2, menuNames, 100, 200);
-//    menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
-//    //початок гри
-//    while (window.isOpen()) {
-//        Event event;
-//        while (window.pollEvent(event)) {
-//            if (event.type == Event::KeyReleased) {
-//                if (event.key.code == Keyboard::Up) {
-//                    menu.moveUp();
-//                }
-//                if (event.key.code == Keyboard::Down) {
-//                    menu.moveDown();
-//                }
-//                if (event.key.code == Keyboard::Enter) {
-//                    switch (menu.getMenuSelected()) {
-//                    case 0:startCheckers(window, width, height);
-//                    case 1:mainMenuStart(window, width, height);
-//                    }
-//                }
-//            }
-//        }
-//        window.clear();
-//        window.draw(mainBackground);
-//        window.draw(titulText);
-//        menu.drawItems();
-//        window.display();
-//    }
-//    return 0;
-//}
-
-int startCheckers() {
-    ContextSettings settings;
-    settings.antialiasingLevel = 16.0;
-    Event event;
-    Board board;
-    int grid[8][8];
-    Piece RedPieces[12];
-    Piece WhitePieces[12];
-    bool selected = false;
-    Piece* SelectedPiece = NULL;
-    int turn = 1;
-    VideoMode desktop = VideoMode::getDesktopMode();
-
-    RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
-
-    for (int i = 0; i < 12; i++) {
-        WhitePieces[i].color = Color::White;
-        RedPieces[i].color = Color::Red;
-    }
-
-    Setup(window, RedPieces, WhitePieces);
-
-    while (window.isOpen()) {
-        while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) {
-                window.close();
-            }
-            if (event.type == Event::MouseButtonReleased) {
-                if (event.mouseButton.button == Mouse::Left) {
-                    selected = !selected;
-                }
-            }
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-            window.close();
         }
         window.clear();
-
-        board.Draw(window);
-
-        int tileSize = window.getSize().x / board.size;
-
-        if (turn == 2) {
-            // Виклик функції AI гравця
-            AIPlayer(WhitePieces, RedPieces, turn);
-        }
-
-        if (SelectedPiece != NULL) {
-            board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
-        }
-
-        for (int i = 0; i < 12; i++) {
-            WhitePieces[i].Draw(window);
-            RedPieces[i].Draw(window);
-        }
-
-        if (selected) {
-            int x = Mouse::getPosition(window).x / 75;
-            int y = Mouse::getPosition(window).y / 75;
-            if (FindPiece(x, y, RedPieces, WhitePieces) && (FindPiece(x, y, RedPieces, WhitePieces)->color == Color::Red && turn == 1 || FindPiece(x, y, RedPieces, WhitePieces)->color == Color::White && turn == 2)) {
-                if (FindPiece(x, y, RedPieces, WhitePieces) == SelectedPiece) {
-                    SelectedPiece = NULL;
-                }
-                else {
-                    SelectedPiece = FindPiece(x, y, RedPieces, WhitePieces);
-                }
-
-                selected = false;
-            }
-            else if (SelectedPiece != NULL && MovePiece(x, y, SelectedPiece, RedPieces, WhitePieces, &turn)) {
-                selected = false;
-                SelectedPiece = NULL;
-            }
-            selected = false;
-        }
-        for (int i = 0; i < 12; i++) {
-            if (RedPieces[i].y == 0) {
-                RedPieces[i].isKing = true;
-            }
-            if (WhitePieces[i].y == 7) {
-                WhitePieces[i].isKing = true;
-            }
-        }
-
-
+        hangmanGame.showElements(window);
         window.display();
     }
-    return 0;
 }
 
 //функція, яка сетить значення карти
-
-void setCardParameters(unoCards& from, unoCards& to) {
+void setCardParameters(unoCards from, unoCards& to) {
     to.color = from.color;
-    to.sprite = from.sprite;// = from.sprite;
+    to.sprite = from.sprite;
     to.symbol = from.symbol;
 }
 void playersTurn(Player& player, Opponent& opponent) {
@@ -2121,183 +2305,102 @@ void opponentsTurn(Player& player, Opponent& opponent) {
     player.setTurn(false);
     opponent.setTurn(true);
 }
-void startUno(RenderWindow& window, int width, int height) {
-    RectangleShape bg(Vector2f(width, height));
-    Texture bgTexture;
-    bgTexture.loadFromFile("Uno/unoBG.jpg");
-    bg.setTexture(&bgTexture);
-    Uno unoTable("Uno/SymbolAndColor.txt");
-    Texture t;
-    t.loadFromFile("Uno/hiddenCard.png");
-    Sprite s;
-    s.setTexture(t);
-    vector<unoCards> startCardsDeck;
-    startCardsDeck.resize(7);
-    unoCards temp;
-
-    for (int i = 0; i < 7; i++) {
-        temp = unoTable.takeCard();
-        setCardParameters(temp, startCardsDeck.at(i));
-    }
-
-    vector<unoCards> startCardsDeck2;
-    startCardsDeck2.resize(7);
+//////////////////////////////
 
 
-    for (int i = 0; i < 7; i++) {
-        temp = unoTable.takeCard();
-        setCardParameters(temp, startCardsDeck2.at(i));
-    }
-
-    Opponent opponent(startCardsDeck2);
-    Player player(startCardsDeck);
-    vector<CircleShape> colorsToPick;
-    colorsToPick.resize(4);
-    for (int i = 0, yPos = 450; i < colorsToPick.size(); i++, yPos += 70) {
-        colorsToPick.at(i).setOutlineColor(Color::White);
-        colorsToPick.at(i).setOutlineThickness(4);
-        colorsToPick.at(i).setRadius(17);
-        colorsToPick.at(i).setPosition(Vector2f(1250, yPos));
-    }
-
-    colorsToPick.at(0).setFillColor(Color(255, 85, 85));
-    colorsToPick.at(1).setFillColor(Color(35, 177, 77));
-    colorsToPick.at(2).setFillColor(Color(255, 201, 13));
-    colorsToPick.at(3).setFillColor(Color(85, 85, 255));
-
-    bool playerPicksCards = false;//чи потрібно тягнути карти гравцю
-    bool opponentPicksCards = false;//чи потрібно тягнути карти супернику
-    int numberOfCardsToPick;//кількість карт, які потрібно потягнути
-
-    bool playerPicksColor = false;
-
-    int whoStarts = rand() % 2;
-    if (whoStarts == 0) {
-        playersTurn(player, opponent);
-    }
-    else {
-        opponentsTurn(player, opponent);
-    }
-    int itemOfcard;//буде приходити цифра 0 -- якщо просто цифра на карті, 1 -- пропустити хід, 2 -- пропуск ходу, 3 -- +2, 4 -- змінити колір, 5 -- +4 і змінити колір
-
-    while (window.isOpen()) {
-        Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) window.close();
-            if (event.key.code == Keyboard::Escape) {
-                mainMenuStart(window, width, height);
-            }
-
-        }
-        if (opponent.getTurn() == true) {
-            if (opponentPicksCards == true) {
-                temp = unoTable.takeCard();
-                //setCardParameters(unoTable.takeCard(), temp);
-                opponent.addCard(temp);
-                numberOfCardsToPick--;
-                if (numberOfCardsToPick == 0) {
-                    opponentPicksCards = false;
-                    playersTurn(player, opponent);
-                }
-                else
-                    opponentsTurn(player, opponent);
-            }
-            else {
-                temp = opponent.pushCard();
-                //setCardParameters(opponent.pushCard(), temp);
-                if (temp.symbol == "notFound") {
-                    opponentsTurn(player, opponent);
-                    opponentPicksCards;
-                    numberOfCardsToPick = 1;
-                }
-                else {
-                    unoTable.setCurrentCard(temp);
-                    player.setCardToBeat(temp);
-                    itemOfcard = opponent.checkForOtherThanNumberCard();
-
-                    switch (itemOfcard) {
-                    case 0:break; break;
-                    case 1:opponentsTurn(player, opponent); break;
-                    case 2:opponentsTurn(player, opponent); break;
-                    case 3: {playersTurn(player, opponent); playerPicksCards = true; numberOfCardsToPick = 2; }; break;
-                    case 4: {unoTable.setCurrentColor(opponent.pickColor()); playersTurn(player, opponent); }; break;
-                    case 5: {unoTable.setCurrentColor(opponent.pickColor()); playersTurn(player, opponent); playerPicksCards = true; numberOfCardsToPick = 4; }; break;
-                    }
-                }
-            }
-        }
-        if (Mouse::isButtonPressed(Mouse::Left)) {
-            sf::Vector2f playPos = { (float)Mouse::getPosition().x,(float)Mouse::getPosition().y };
-            Sleep(500);
-            if (unoTable.hiddenCardDeck.getGlobalBounds().contains(playPos.x, playPos.y)) {
-                temp = unoTable.takeCard();
-                //setCardParameters(unoTable.takeCard(), temp);
-                player.addCard(temp);
-            }
-            if (player.getTurn() == true) {
-
-                if (playerPicksColor == true) {
-                    if (colorsToPick.at(0).getGlobalBounds().contains(playPos.x, playPos.y)) {
-                        unoTable.setCurrentColor("red");
-                    }
-                    else if (colorsToPick.at(1).getGlobalBounds().contains(playPos.x, playPos.y)) {
-                        unoTable.setCurrentColor("green");
-                    }
-                    else if (colorsToPick.at(2).getGlobalBounds().contains(playPos.x, playPos.y)) {
-                        unoTable.setCurrentColor("yellow");
-                    }
-                    else if (colorsToPick.at(3).getGlobalBounds().contains(playPos.x, playPos.y)) {
-                        unoTable.setCurrentColor("blue");
-                    }
-
-                    playerPicksColor = false;
-                    if (opponentPicksCards == true)
-                        opponentsTurn(player, opponent);
-                    else
-                        opponentsTurn(player, opponent);
-                }
-                else if (playerPicksCards == true) {
-                    temp = unoTable.takeCard();
-                    //setCardParameters(unoTable.takeCard(), temp);
-                    player.addCard(temp);
-                    numberOfCardsToPick--;
-                    if (numberOfCardsToPick == 0) {
-                        playerPicksCards = false;
-                        opponentsTurn(player, opponent);
-                    }
-                    else
-                        playersTurn(player, opponent);
-                }
-                else {
-                    temp = player.pushCard(playPos);
-                    //setCardParameters(player.pushCard(playPos), temp);
-                    unoTable.setCurrentCard(temp);
-                    opponent.setCardToBeat(temp);
-                    itemOfcard = player.checkForOtherThanNumberCard();
-                    switch (itemOfcard) {
-                    case 0:break; break;
-                    case 1:playersTurn(player, opponent); break;
-                    case 2:playersTurn(player, opponent); break;
-                    case 3: {opponentsTurn(player, opponent); opponentPicksCards = true; numberOfCardsToPick = 2; }; break;
-                    case 4: {playersTurn(player, opponent); playerPicksColor = true; }; break;
-                    case 5: {playerPicksColor = true; playersTurn(player, opponent); opponentPicksCards = true; numberOfCardsToPick = 4; }; break;
-                    }
-                }
-            }
-        }
-        player.changeColorForTurn();
-        opponent.changeColorForTurn();
-        window.clear();
-        window.draw(bg);
-        unoTable.showAllElements(window);
-        player.showElements(window);
-        opponent.showElements(window);
-        for (int i = 0; i < 4; i++) {
-            window.draw(colorsToPick.at(i));
-        }
-        window.display();
-    }
-    startCardsDeck2.clear();
-    startCardsDeck.clear();
-    colorsToPick.clear();
-}
+//int startCheckers(RenderWindow& Window, int width, int height) {
+//    Window.close();
+//    ContextSettings settings;
+//    settings.antialiasingLevel = 16.0;
+//    Event event;
+//    Board board;
+//    int grid[8][8];
+//    Piece RedPieces[12];
+//    Piece WhitePieces[12];
+//    bool selected = false;
+//    Piece* SelectedPiece = NULL;
+//    int turn = 1;
+//    VideoMode desktop = VideoMode::getDesktopMode();
+//
+//    RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
+//
+//    for (int i = 0; i < 12; i++) {
+//        WhitePieces[i].color = Color::White;
+//        RedPieces[i].color = Color::Red;
+//    }
+//
+//    Setup(window, RedPieces, WhitePieces);
+//
+//    while (window.isOpen()) {
+//        while (window.pollEvent(event)) {
+//            if (event.type == Event::Closed) {
+//                window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+//                float width = VideoMode::getDesktopMode().width;//ширина екрана
+//                float height = VideoMode::getDesktopMode().height;//висота екрана
+//                ClientCode(Window, width, height);
+//            }
+//            if (event.type == Event::MouseButtonReleased) {
+//                if (event.mouseButton.button == Mouse::Left) {
+//                    selected = !selected;
+//                }
+//            }
+//        }
+//        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+//            { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+//            float width = VideoMode::getDesktopMode().width;//ширина екрана
+//            float height = VideoMode::getDesktopMode().height;//висота екрана
+//            ClientCode(Window, width, height); }
+//        }
+//        window.clear();
+//
+//        board.Draw(window);
+//
+//        int tileSize = window.getSize().x / board.size;
+//
+//        if (turn == 2) {
+//            // Виклик функції AI гравця
+//            AIPlayer(WhitePieces, RedPieces, turn);
+//        }
+//
+//        if (SelectedPiece != NULL) {
+//            board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
+//        }
+//
+//        for (int i = 0; i < 12; i++) {
+//            WhitePieces[i].Draw(window);
+//            RedPieces[i].Draw(window);
+//        }
+//
+//        if (selected) {
+//            int x = Mouse::getPosition(window).x / 75;
+//            int y = Mouse::getPosition(window).y / 75;
+//            if (FindPiece(x, y, RedPieces, WhitePieces) && (FindPiece(x, y, RedPieces, WhitePieces)->color == Color::Red && turn == 1 || FindPiece(x, y, RedPieces, WhitePieces)->color == Color::White && turn == 2)) {
+//                if (FindPiece(x, y, RedPieces, WhitePieces) == SelectedPiece) {
+//                    SelectedPiece = NULL;
+//                }
+//                else {
+//                    SelectedPiece = FindPiece(x, y, RedPieces, WhitePieces);
+//                }
+//
+//                selected = false;
+//            }
+//            else if (SelectedPiece != NULL && MovePiece(x, y, SelectedPiece, RedPieces, WhitePieces, &turn)) {
+//                selected = false;
+//                SelectedPiece = NULL;
+//            }
+//            selected = false;
+//        }
+//        for (int i = 0; i < 12; i++) {
+//            if (RedPieces[i].y == 0) {
+//                RedPieces[i].isKing = true;
+//            }
+//            if (WhitePieces[i].y == 7) {
+//                WhitePieces[i].isKing = true;
+//            }
+//        }
+//
+//
+//        window.display();
+//    }
+//    return 0;
+//}
