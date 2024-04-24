@@ -20,7 +20,6 @@ using namespace sf;
 #include "Piece.h"
 #include "Uno.h"
 
-//int startCheckers(RenderWindow& mainWindow, int width, int height);
 void enemiesTurn(gameText& text, BattleShip& enemy, BattleShip& player);
 void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player);
 void setCardParameters(unoCards from, unoCards& to);
@@ -519,7 +518,6 @@ namespace snake {
         sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
 
         std::vector<int> snake_direction_queue;
-        snake_direction_queue.resize(1000);
 
         while (window.isOpen())
         {
@@ -2305,102 +2303,4 @@ void opponentsTurn(Player& player, Opponent& opponent) {
     player.setTurn(false);
     opponent.setTurn(true);
 }
-//////////////////////////////
 
-
-//int startCheckers(RenderWindow& Window, int width, int height) {
-//    Window.close();
-//    ContextSettings settings;
-//    settings.antialiasingLevel = 16.0;
-//    Event event;
-//    Board board;
-//    int grid[8][8];
-//    Piece RedPieces[12];
-//    Piece WhitePieces[12];
-//    bool selected = false;
-//    Piece* SelectedPiece = NULL;
-//    int turn = 1;
-//    VideoMode desktop = VideoMode::getDesktopMode();
-//
-//    RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
-//
-//    for (int i = 0; i < 12; i++) {
-//        WhitePieces[i].color = Color::White;
-//        RedPieces[i].color = Color::Red;
-//    }
-//
-//    Setup(window, RedPieces, WhitePieces);
-//
-//    while (window.isOpen()) {
-//        while (window.pollEvent(event)) {
-//            if (event.type == Event::Closed) {
-//                window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-//                float width = VideoMode::getDesktopMode().width;//ширина екрана
-//                float height = VideoMode::getDesktopMode().height;//висота екрана
-//                ClientCode(Window, width, height);
-//            }
-//            if (event.type == Event::MouseButtonReleased) {
-//                if (event.mouseButton.button == Mouse::Left) {
-//                    selected = !selected;
-//                }
-//            }
-//        }
-//        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-//            { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-//            float width = VideoMode::getDesktopMode().width;//ширина екрана
-//            float height = VideoMode::getDesktopMode().height;//висота екрана
-//            ClientCode(Window, width, height); }
-//        }
-//        window.clear();
-//
-//        board.Draw(window);
-//
-//        int tileSize = window.getSize().x / board.size;
-//
-//        if (turn == 2) {
-//            // Виклик функції AI гравця
-//            AIPlayer(WhitePieces, RedPieces, turn);
-//        }
-//
-//        if (SelectedPiece != NULL) {
-//            board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
-//        }
-//
-//        for (int i = 0; i < 12; i++) {
-//            WhitePieces[i].Draw(window);
-//            RedPieces[i].Draw(window);
-//        }
-//
-//        if (selected) {
-//            int x = Mouse::getPosition(window).x / 75;
-//            int y = Mouse::getPosition(window).y / 75;
-//            if (FindPiece(x, y, RedPieces, WhitePieces) && (FindPiece(x, y, RedPieces, WhitePieces)->color == Color::Red && turn == 1 || FindPiece(x, y, RedPieces, WhitePieces)->color == Color::White && turn == 2)) {
-//                if (FindPiece(x, y, RedPieces, WhitePieces) == SelectedPiece) {
-//                    SelectedPiece = NULL;
-//                }
-//                else {
-//                    SelectedPiece = FindPiece(x, y, RedPieces, WhitePieces);
-//                }
-//
-//                selected = false;
-//            }
-//            else if (SelectedPiece != NULL && MovePiece(x, y, SelectedPiece, RedPieces, WhitePieces, &turn)) {
-//                selected = false;
-//                SelectedPiece = NULL;
-//            }
-//            selected = false;
-//        }
-//        for (int i = 0; i < 12; i++) {
-//            if (RedPieces[i].y == 0) {
-//                RedPieces[i].isKing = true;
-//            }
-//            if (WhitePieces[i].y == 7) {
-//                WhitePieces[i].isKing = true;
-//            }
-//        }
-//
-//
-//        window.display();
-//    }
-//    return 0;
-//}

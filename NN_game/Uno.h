@@ -197,13 +197,12 @@ public:
         }
         underlineForTurn.setPosition(Vector2f(650.f, 370.f));
     }
-    void resizeHiddenCards() {
-        hiddenCards.resize(playerCardDeck.size());
-    }
+
     void showElements(RenderWindow& window) override {
-        if (!playerCardDeck.empty()) {
+        if (!(playerCardDeck.empty())) {
+            hiddenCards.resize(playerCardDeck.size());
             int halfSizeOfcardDeck = playerCardDeck.size() / 2;
-            if (halfSizeOfcardDeck != 1) {
+            if (playerCardDeck.size() != 1) {
                 int posX = (window.getSize().x / 2) - (halfSizeOfcardDeck * 90);
                 for (int i = 0; i < hiddenCards.size(); i++) {
                     hiddenCards.at(i).setTexture(HiddenCardTexture);
@@ -215,7 +214,7 @@ public:
                     window.draw(hiddenCards.at(i));
                 }
             }
-            else if (hiddenCards.size() == 1) {
+            else {
                 hiddenCards.at(0).setTexture(HiddenCardTexture);
                 hiddenCards.at(0).setScale(Vector2f(0.269f, 0.269f));
                 hiddenCards.at(0).setPosition(900, 150);
@@ -225,9 +224,6 @@ public:
             window.draw(textForTurn);
             window.draw(underlineForTurn);
         }
-        /*changeColorForTurn();
-        window.draw(textForTurn);
-        window.draw(underlineForTurn);*/
     }
 
     unoCards pushCard() {
