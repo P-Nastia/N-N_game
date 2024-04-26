@@ -511,217 +511,217 @@ namespace snake {
         }
     }
 
-    int main(RenderWindow& Window, int width, int height)
-    {
-        Window.close();
-        init_game();
+    //int main(RenderWindow& Window, int width, int height)
+    //{
+    //    Window.close();
+    //    init_game();
 
-        sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
+    //    sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
 
-        std::vector<int> snake_direction_queue;
+    //    std::vector<int> snake_direction_queue;
 
-        while (window.isOpen())
-        {
-            sf::Event event;
-            while (window.pollEvent(event))
-            {
-                if (event.type == sf::Event::Closed) {
-                    snake_direction_queue.clear();
-                    window.close();
-                    Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-                    float width = VideoMode::getDesktopMode().width;
-                    float height = VideoMode::getDesktopMode().height;
-                    ClientCode(Window, width, height);
-                }
-                if (event.type == sf::Event::KeyPressed) {
-                    if (game_paused) {
-                        if (game_over_timeout == 0) {
-                            if (current_menu == MENU_MAIN) {
-                                switch (event.key.code) {
-                                case sf::Keyboard::Up:
-                                    sound_menu_navigate.play();
-                                    current_main_menu_item_index--;
-                                    if (current_main_menu_item_index < 0) {
-                                        current_main_menu_item_index = text_main_menu_items.size() - 1;
-                                    }
-                                    break;
-                                case sf::Keyboard::Down:
-                                    sound_menu_navigate.play();
-                                    current_main_menu_item_index++;
-                                    if (current_main_menu_item_index > text_main_menu_items.size() - 1) {
-                                        current_main_menu_item_index = 0;
-                                    }
-                                    break;
-                                case sf::Keyboard::Enter:
-                                    sound_menu_navigate.play();
-                                    if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_START) {
-                                        if (!game_over && game_started) {
-                                            game_paused = false;
-                                        }
-                                        else {
-                                            start_game();
-                                        }
-                                    }
-                                    if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_SETTINGS) {
-                                        current_menu = MENU_SETTINGS;
-                                        current_settings_menu_item_index = 0;
-                                    }
-                                    if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_QUIT) {
-                                        window.close();
-                                        Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-                                        float width = VideoMode::getDesktopMode().width;//ширина екрана
-                                        float height = VideoMode::getDesktopMode().height;//висота екрана
-                                        ClientCode(Window, width, height);
-                                    }
-                                    break;
-                                case sf::Keyboard::Escape:
-                                    sound_menu_navigate.play();
-                                    if (!game_over && game_started) {
-                                        game_paused = false;
-                                    }
-                                    break;
-                                }
-                            }
-                            else if (current_menu == MENU_SETTINGS) {
-                                switch (event.key.code) {
-                                case sf::Keyboard::Up:
-                                    sound_menu_navigate.play();
-                                    current_settings_menu_item_index--;
-                                    if (current_settings_menu_item_index < 0) {
-                                        current_settings_menu_item_index = text_settings_menu_items.size() - 1;
-                                    }
-                                    break;
-                                case sf::Keyboard::Down:
-                                    sound_menu_navigate.play();
-                                    current_settings_menu_item_index++;
-                                    if (current_settings_menu_item_index > text_settings_menu_items.size() - 1) {
-                                        current_settings_menu_item_index = 0;
-                                    }
-                                    break;
-                                case sf::Keyboard::Left:
-                                    if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
-                                        if (settings_volume > 0) {
-                                            settings_volume -= 5;
-                                            set_volume();
-                                            sound_menu_navigate.play();
-                                        }
-                                    }
-                                    break;
-                                case sf::Keyboard::Right:
-                                    if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
-                                        if (settings_volume < 100) {
-                                            settings_volume += 5;
-                                            set_volume();
-                                            sound_menu_navigate.play();
-                                        }
-                                    }
-                                    break;
-                                case sf::Keyboard::Enter:
-                                    sound_menu_navigate.play();
-                                    if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_BACK) {
-                                        current_menu = MENU_MAIN;
-                                    }
-                                    break;
-                                case sf::Keyboard::Escape:
-                                    sound_menu_navigate.play();
-                                    current_menu = MENU_MAIN;
-                                    break;
-                                }
-                            }
-                        }
-                        else {
-                            game_over_timeout = 0;
-                        }
-                    }
-                    else {
-                        int snake_direction_last = snake_direction_queue.empty() ? game_state.snake_direction : snake_direction_queue.at(0);
-                        switch (event.key.code) {
-                        case sf::Keyboard::Up:
-                            if (snake_direction_last != SNAKE_DIRECTION_UP && snake_direction_last != SNAKE_DIRECTION_DOWN) {
-                                if (snake_direction_queue.size() < 2) {
-                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_UP);
-                                }
-                            }
-                            break;
-                        case sf::Keyboard::Right:
-                            if (snake_direction_last != SNAKE_DIRECTION_RIGHT && snake_direction_last != SNAKE_DIRECTION_LEFT) {
-                                if (snake_direction_queue.size() < 2) {
-                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_RIGHT);
-                                }
-                            }
-                            break;
-                        case sf::Keyboard::Down:
-                            if (snake_direction_last != SNAKE_DIRECTION_DOWN && snake_direction_last != SNAKE_DIRECTION_UP) {
-                                if (snake_direction_queue.size() < 2) {
-                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_DOWN);
-                                }
-                            }
-                            break;
-                        case sf::Keyboard::Left:
-                            if (snake_direction_last != SNAKE_DIRECTION_LEFT && snake_direction_last != SNAKE_DIRECTION_RIGHT) {
-                                if (snake_direction_queue.size() < 2) {
-                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_LEFT);
-                                }
-                            }
-                            break;
-                        case sf::Keyboard::Escape:
-                            game_paused = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (!snake_direction_queue.empty()) {
-                game_state.snake_direction = snake_direction_queue.back();
-                snake_direction_queue.pop_back();
-            }
+    //    while (window.isOpen())
+    //    {
+    //        sf::Event event;
+    //        while (window.pollEvent(event))
+    //        {
+    //            if (event.type == sf::Event::Closed) {
+    //                snake_direction_queue.clear();
+    //                window.close();
+    //                Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+    //                float width = VideoMode::getDesktopMode().width;
+    //                float height = VideoMode::getDesktopMode().height;
+    //                ClientCode(Window, width, height);
+    //            }
+    //            if (event.type == sf::Event::KeyPressed) {
+    //                if (game_paused) {
+    //                    if (game_over_timeout == 0) {
+    //                        if (current_menu == MENU_MAIN) {
+    //                            switch (event.key.code) {
+    //                            case sf::Keyboard::Up:
+    //                                sound_menu_navigate.play();
+    //                                current_main_menu_item_index--;
+    //                                if (current_main_menu_item_index < 0) {
+    //                                    current_main_menu_item_index = text_main_menu_items.size() - 1;
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Down:
+    //                                sound_menu_navigate.play();
+    //                                current_main_menu_item_index++;
+    //                                if (current_main_menu_item_index > text_main_menu_items.size() - 1) {
+    //                                    current_main_menu_item_index = 0;
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Enter:
+    //                                sound_menu_navigate.play();
+    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_START) {
+    //                                    if (!game_over && game_started) {
+    //                                        game_paused = false;
+    //                                    }
+    //                                    else {
+    //                                        start_game();
+    //                                    }
+    //                                }
+    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_SETTINGS) {
+    //                                    current_menu = MENU_SETTINGS;
+    //                                    current_settings_menu_item_index = 0;
+    //                                }
+    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_QUIT) {
+    //                                    window.close();
+    //                                    Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+    //                                    float width = VideoMode::getDesktopMode().width;//ширина екрана
+    //                                    float height = VideoMode::getDesktopMode().height;//висота екрана
+    //                                    ClientCode(Window, width, height);
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Escape:
+    //                                sound_menu_navigate.play();
+    //                                if (!game_over && game_started) {
+    //                                    game_paused = false;
+    //                                }
+    //                                break;
+    //                            }
+    //                        }
+    //                        else if (current_menu == MENU_SETTINGS) {
+    //                            switch (event.key.code) {
+    //                            case sf::Keyboard::Up:
+    //                                sound_menu_navigate.play();
+    //                                current_settings_menu_item_index--;
+    //                                if (current_settings_menu_item_index < 0) {
+    //                                    current_settings_menu_item_index = text_settings_menu_items.size() - 1;
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Down:
+    //                                sound_menu_navigate.play();
+    //                                current_settings_menu_item_index++;
+    //                                if (current_settings_menu_item_index > text_settings_menu_items.size() - 1) {
+    //                                    current_settings_menu_item_index = 0;
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Left:
+    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
+    //                                    if (settings_volume > 0) {
+    //                                        settings_volume -= 5;
+    //                                        set_volume();
+    //                                        sound_menu_navigate.play();
+    //                                    }
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Right:
+    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
+    //                                    if (settings_volume < 100) {
+    //                                        settings_volume += 5;
+    //                                        set_volume();
+    //                                        sound_menu_navigate.play();
+    //                                    }
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Enter:
+    //                                sound_menu_navigate.play();
+    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_BACK) {
+    //                                    current_menu = MENU_MAIN;
+    //                                }
+    //                                break;
+    //                            case sf::Keyboard::Escape:
+    //                                sound_menu_navigate.play();
+    //                                current_menu = MENU_MAIN;
+    //                                break;
+    //                            }
+    //                        }
+    //                    }
+    //                    else {
+    //                        game_over_timeout = 0;
+    //                    }
+    //                }
+    //                else {
+    //                    int snake_direction_last = snake_direction_queue.empty() ? game_state.snake_direction : snake_direction_queue.at(0);
+    //                    switch (event.key.code) {
+    //                    case sf::Keyboard::Up:
+    //                        if (snake_direction_last != SNAKE_DIRECTION_UP && snake_direction_last != SNAKE_DIRECTION_DOWN) {
+    //                            if (snake_direction_queue.size() < 2) {
+    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_UP);
+    //                            }
+    //                        }
+    //                        break;
+    //                    case sf::Keyboard::Right:
+    //                        if (snake_direction_last != SNAKE_DIRECTION_RIGHT && snake_direction_last != SNAKE_DIRECTION_LEFT) {
+    //                            if (snake_direction_queue.size() < 2) {
+    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_RIGHT);
+    //                            }
+    //                        }
+    //                        break;
+    //                    case sf::Keyboard::Down:
+    //                        if (snake_direction_last != SNAKE_DIRECTION_DOWN && snake_direction_last != SNAKE_DIRECTION_UP) {
+    //                            if (snake_direction_queue.size() < 2) {
+    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_DOWN);
+    //                            }
+    //                        }
+    //                        break;
+    //                    case sf::Keyboard::Left:
+    //                        if (snake_direction_last != SNAKE_DIRECTION_LEFT && snake_direction_last != SNAKE_DIRECTION_RIGHT) {
+    //                            if (snake_direction_queue.size() < 2) {
+    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_LEFT);
+    //                            }
+    //                        }
+    //                        break;
+    //                    case sf::Keyboard::Escape:
+    //                        game_paused = true;
+    //                        break;
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        
+    //        if (!snake_direction_queue.empty()) {
+    //            game_state.snake_direction = snake_direction_queue.back();
+    //            snake_direction_queue.pop_back();
+    //        }
 
-            if (!game_paused) {
-                if (!rollback) {
-                    make_move();
-                }
-                else {
-                    if (!game_last_states.empty()) {
-                        game_state = game_last_states.back();
-                        game_last_states.pop_back();
-                    }
-                    else {
-                        rollback = false;
-                    }
-                }
-            }
+    //        if (!game_paused) {
+    //            if (!rollback) {
+    //                make_move();
+    //            }
+    //            else {
+    //                if (!game_last_states.empty()) {
+    //                    game_state = game_last_states.back();
+    //                    game_last_states.pop_back();
+    //                }
+    //                else {
+    //                    rollback = false;
+    //                }
+    //            }
+    //        }
 
-            window.clear(sf::Color(183, 212, 168));
+    //        window.clear(sf::Color(183, 212, 168));
 
-            draw_field(window);
-            draw_score_bar(window);
+    //        draw_field(window);
+    //        draw_score_bar(window);
 
-            if (game_over) {
-                window.draw(text_game_over);
-                if (game_over_timeout > 0) {
-                    game_over_timeout--;
-                }
-            }
+    //        if (game_over) {
+    //            window.draw(text_game_over);
+    //            if (game_over_timeout > 0) {
+    //                game_over_timeout--;
+    //            }
+    //        }
 
-            if (game_paused && game_over_timeout == 0) {
-                switch (current_menu) {
-                case MENU_MAIN:
-                    draw_main_menu(window);
-                    break;
-                case MENU_SETTINGS:
-                    draw_settings_menu(window);
-                    break;
-                }
-            }
+    //        if (game_paused && game_over_timeout == 0) {
+    //            switch (current_menu) {
+    //            case MENU_MAIN:
+    //                draw_main_menu(window);
+    //                break;
+    //            case MENU_SETTINGS:
+    //                draw_settings_menu(window);
+    //                break;
+    //            }
+    //        }
 
-            window.display();
+    //        window.display();
 
-            sf::sleep(sf::milliseconds(100));
-        }
+    //        sf::sleep(sf::milliseconds(100));
+    //    }
 
-        return 0;
-    }
+    //    return 0;
+    //}
 }
 
 namespace ticTacToe {
@@ -1647,7 +1647,6 @@ public:
     virtual void DoAlgorithm(RenderWindow& window, int width, int height) const = 0;
 };
 
-
 class Context
 {
 private:
@@ -1829,6 +1828,7 @@ public:
     }
 
 };
+
 class UnoGame : public Strategy
 {
     void DoAlgorithm(RenderWindow& window, int width, int height) const override
@@ -2092,6 +2092,219 @@ public:
     }
 };
 
+class Snake :public Strategy {
+public:
+    void DoAlgorithm(RenderWindow& Window, int width, int height) const override
+    {
+        Window.close();
+        snake::init_game();
+
+        sf::RenderWindow window(sf::VideoMode(snake::window_width, snake::window_height), "Snake", sf::Style::Close);
+
+        std::vector<int> snake_direction_queue;
+
+        while (window.isOpen())
+        {
+            sf::Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed) {
+                    snake_direction_queue.clear();
+                    window.close();
+                    Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                    float width = VideoMode::getDesktopMode().width;
+                    float height = VideoMode::getDesktopMode().height;
+                    ClientCode(Window, width, height);
+                }
+                if (event.type == sf::Event::KeyPressed) {
+                    if (snake::game_paused) {
+                        if (snake::game_over_timeout == 0) {
+                            if (snake::current_menu == MENU_MAIN) {
+                                switch (event.key.code) {
+                                case sf::Keyboard::Up:
+                                    snake::sound_menu_navigate.play();
+                                    snake::current_main_menu_item_index--;
+                                    if (snake::current_main_menu_item_index < 0) {
+                                        snake::current_main_menu_item_index = snake::text_main_menu_items.size() - 1;
+                                    }
+                                    break;
+                                case sf::Keyboard::Down:
+                                    snake::sound_menu_navigate.play();
+                                    snake::current_main_menu_item_index++;
+                                    if (snake::current_main_menu_item_index > snake::text_main_menu_items.size() - 1) {
+                                        snake::current_main_menu_item_index = 0;
+                                    }
+                                    break;
+                                case sf::Keyboard::Enter:
+                                    snake::sound_menu_navigate.play();
+                                    if (snake::main_menu_items.at(snake::current_main_menu_item_index) == MENU_ITEM_START) {
+                                        if (!snake::game_over && snake::game_started) {
+                                            snake::game_paused = false;
+                                        }
+                                        else {
+                                            snake::start_game();
+                                        }
+                                    }
+                                    if (snake::main_menu_items.at(snake::current_main_menu_item_index) == MENU_ITEM_SETTINGS) {
+                                        snake::current_menu = MENU_SETTINGS;
+                                        snake::current_settings_menu_item_index = 0;
+                                    }
+                                    if (snake::main_menu_items.at(snake::current_main_menu_item_index) == MENU_ITEM_QUIT) {
+                                        window.close();
+                                        Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
+                                        float width = VideoMode::getDesktopMode().width;//ширина екрана
+                                        float height = VideoMode::getDesktopMode().height;//висота екрана
+                                        ClientCode(Window, width, height);
+                                    }
+                                    break;
+                                case sf::Keyboard::Escape:
+                                    snake::sound_menu_navigate.play();
+                                    if (!snake::game_over && snake::game_started) {
+                                        snake::game_paused = false;
+                                    }
+                                    break;
+                                }
+                            }
+                            else if (snake::current_menu == MENU_SETTINGS) {
+                                switch (event.key.code) {
+                                case sf::Keyboard::Up:
+                                    snake::sound_menu_navigate.play();
+                                    snake::current_settings_menu_item_index--;
+                                    if (snake::current_settings_menu_item_index < 0) {
+                                        snake::current_settings_menu_item_index = snake::text_settings_menu_items.size() - 1;
+                                    }
+                                    break;
+                                case sf::Keyboard::Down:
+                                    snake::sound_menu_navigate.play();
+                                    snake::current_settings_menu_item_index++;
+                                    if (snake::current_settings_menu_item_index > snake::text_settings_menu_items.size() - 1) {
+                                        snake::current_settings_menu_item_index = 0;
+                                    }
+                                    break;
+                                case sf::Keyboard::Left:
+                                    if (snake::settings_menu_items.at(snake::current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
+                                        if (snake::settings_volume > 0) {
+                                            snake::settings_volume -= 5;
+                                            snake::set_volume();
+                                            snake::sound_menu_navigate.play();
+                                        }
+                                    }
+                                    break;
+                                case sf::Keyboard::Right:
+                                    if (snake::settings_menu_items.at(snake::current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
+                                        if (snake::settings_volume < 100) {
+                                            snake::settings_volume += 5;
+                                            snake::set_volume();
+                                            snake::sound_menu_navigate.play();
+                                        }
+                                    }
+                                    break;
+                                case sf::Keyboard::Enter:
+                                    snake::sound_menu_navigate.play();
+                                    if (snake::settings_menu_items.at(snake::current_settings_menu_item_index) == MENU_ITEM_BACK) {
+                                        snake::current_menu = MENU_MAIN;
+                                    }
+                                    break;
+                                case sf::Keyboard::Escape:
+                                    snake::sound_menu_navigate.play();
+                                    snake::current_menu = MENU_MAIN;
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            snake::game_over_timeout = 0;
+                        }
+                    }
+                    else {
+                        int snake_direction_last = snake_direction_queue.empty() ? snake::game_state.snake_direction : snake_direction_queue.at(0);
+                        switch (event.key.code) {
+                        case sf::Keyboard::Up:
+                            if (snake_direction_last != SNAKE_DIRECTION_UP && snake_direction_last != SNAKE_DIRECTION_DOWN) {
+                                if (snake_direction_queue.size() < 2) {
+                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_UP);
+                                }
+                            }
+                            break;
+                        case sf::Keyboard::Right:
+                            if (snake_direction_last != SNAKE_DIRECTION_RIGHT && snake_direction_last != SNAKE_DIRECTION_LEFT) {
+                                if (snake_direction_queue.size() < 2) {
+                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_RIGHT);
+                                }
+                            }
+                            break;
+                        case sf::Keyboard::Down:
+                            if (snake_direction_last != SNAKE_DIRECTION_DOWN && snake_direction_last != SNAKE_DIRECTION_UP) {
+                                if (snake_direction_queue.size() < 2) {
+                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_DOWN);
+                                }
+                            }
+                            break;
+                        case sf::Keyboard::Left:
+                            if (snake_direction_last != SNAKE_DIRECTION_LEFT && snake_direction_last != SNAKE_DIRECTION_RIGHT) {
+                                if (snake_direction_queue.size() < 2) {
+                                    snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_LEFT);
+                                }
+                            }
+                            break;
+                        case sf::Keyboard::Escape:
+                            snake::game_paused = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!snake_direction_queue.empty()) {
+                snake::game_state.snake_direction = snake_direction_queue.back();
+                snake_direction_queue.pop_back();
+            }
+
+            if (!snake::game_paused) {
+                if (!snake::rollback) {
+                    snake::make_move();
+                }
+                else {
+                    if (!snake::game_last_states.empty()) {
+                        snake::game_state = snake::game_last_states.back();
+                        snake::game_last_states.pop_back();
+                    }
+                    else {
+                        snake::rollback = false;
+                    }
+                }
+            }
+
+            window.clear(sf::Color(183, 212, 168));
+
+            snake::draw_field(window);
+            snake::draw_score_bar(window);
+
+            if (snake::game_over) {
+                window.draw(snake::text_game_over);
+                if (snake::game_over_timeout > 0) {
+                    snake::game_over_timeout--;
+                }
+            }
+
+            if (snake::game_paused && snake::game_over_timeout == 0) {
+                switch (snake::current_menu) {
+                case MENU_MAIN:
+                    snake::draw_main_menu(window);
+                    break;
+                case MENU_SETTINGS:
+                    snake::draw_settings_menu(window);
+                    break;
+                }
+            }
+
+            window.display();
+
+            sf::sleep(sf::milliseconds(100));
+        }
+    }
+};
+
 class Checkers :public Strategy {
 public:
     void DoAlgorithm(RenderWindow& Window, int width, int height) const override {
@@ -2223,7 +2436,7 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
                     switch (menu.getMenuSelected()) {
                     case 0: {ticTacToe::main(mainWindow, width, height); }; break;
                     case 1: {context->set_strategy(new HangmanMenu); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
-                    case 2: {snake::main(mainWindow, width, height); }; break;
+                    case 2: { context->set_strategy(new Snake); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 3: {context->set_strategy(new BattleShipGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 4: {context->set_strategy(new Checkers); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 5: {context->set_strategy(new UnoGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
