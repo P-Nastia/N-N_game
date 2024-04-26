@@ -6,6 +6,7 @@
 #include <fstream>
 #include <ctime>
 #include <Windows.h>
+#include <algorithm>
 #include <map>
 #include "gameText.h"
 using namespace std;
@@ -40,8 +41,7 @@ public:
         return currentCard;
     }
     void showAllElements(RenderWindow& window);
-
-
+    bool isEmpty() { return (availableCards.empty() == true) ? true : false; }
     ~Uno();
 };
 
@@ -93,6 +93,7 @@ public:
         else
             return false;
     }
+
     void addCard(unoCards& card) {//пот€гнути карту
         playerCardDeck.resize(playerCardDeck.size() + 1);
         playerCardDeck.at(playerCardDeck.size() - 1).color = card.color;
@@ -159,7 +160,6 @@ public:
         window.draw(textForTurn);
         window.draw(underlineForTurn);
     }
-
     unoCards pushCard(Vector2f mouse) { //зробити х≥д дл€ гравц€ (приход€ть координати мишки ≥ зв≥р€Їтьс€ на €ку карту попало)
         for (int i = 0; i < playerCardDeck.size(); i++) {
             if (playerCardDeck.at(i).sprite.getGlobalBounds().contains(mouse.x, mouse.y) == true) {
@@ -180,7 +180,6 @@ public:
     }
 };
 
-
 class Opponent : public basePlayer {
     vector<Sprite> hiddenCards;
     Texture HiddenCardTexture;
@@ -197,13 +196,12 @@ public:
         }
         underlineForTurn.setPosition(Vector2f(650.f, 370.f));
     }
-
     void showElements(RenderWindow& window) override {
         if (!(playerCardDeck.empty())) {
             hiddenCards.resize(playerCardDeck.size());
             int halfSizeOfcardDeck = playerCardDeck.size() / 2;
             if (playerCardDeck.size() != 1) {
-                int posX = (window.getSize().x / 2) - (halfSizeOfcardDeck * 90);
+                int posX = (window.getSize().x / 2) - (halfSizeOfcardDeck * 89);
                 for (int i = 0; i < hiddenCards.size(); i++) {
                     hiddenCards.at(i).setTexture(HiddenCardTexture);
                     hiddenCards.at(i).setScale(Vector2f(0.269f, 0.269f));
@@ -220,10 +218,10 @@ public:
                 hiddenCards.at(0).setPosition(900, 150);
                 window.draw(hiddenCards.at(0));
             }
-            changeColorForTurn();
-            window.draw(textForTurn);
-            window.draw(underlineForTurn);
         }
+        changeColorForTurn();
+        window.draw(textForTurn);
+        window.draw(underlineForTurn);
     }
 
     unoCards pushCard() {

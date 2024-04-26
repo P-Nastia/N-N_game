@@ -3,24 +3,30 @@
 Uno::Uno(string fileName)
 {
     srand(time(NULL));
-    cardDeck.resize(108);
     float widt = 85.4;
-    float length = 0;
-    cardDeck.resize(108);
+    int length = 0;
     int countCards = 0;
     int posY = 10;
     int count = 0;
+
+    for (int i = 0; i < 108; i++) {
+        cardDeck.push_back(unoCards());
+        availableCards.push_back(i);
+    }
     while (count < 8) {
         if (count < 4) {
             for (int i = 0, posX = 10; i < 14; i++, posX += 100, countCards++) {
                 cardDeck.at(countCards).sprite.setTexture(cardDeck.at(countCards).texture);
-                cardDeck.at(countCards).sprite.setTextureRect(IntRect(widt * i, length, 85.4, 128));
+                cardDeck.at(countCards).sprite.setTextureRect(IntRect(widt * i, length, 85, 128));
+                cardDeck.at(countCards).sprite.setPosition(Vector2f(posX, posY));
+                //cardDeck.at(countCards).sprite.setScale(Vector)
             }
         }
         else if (count >= 4) {
-            for (float i = 1, posX = 10; i < 14; i++, posX += 100, countCards++) {
+            for (int i = 1, posX = 10; i < 14; i++, posX += 100, countCards++) {
                 cardDeck.at(countCards).sprite.setTexture(cardDeck.at(countCards).texture);
-                cardDeck.at(countCards).sprite.setTextureRect(IntRect(widt * i, length, 85.4, 128));
+                cardDeck.at(countCards).sprite.setTextureRect(IntRect(widt * i, length, 85, 128));
+                cardDeck.at(countCards).sprite.setPosition(Vector2f(posX, posY));
             }
         }
         count++;
@@ -46,13 +52,12 @@ Uno::Uno(string fileName)
         cout << randomNum << endl;
     } while (!(cardDeck.at(randomNum).symbol >= '0' && cardDeck.at(randomNum).symbol <= '9'));
 
-    cout << "size " << cardDeck.size() << endl;
     string color = cardDeck.at(randomNum).color;
     setCurrentColor(color);
     currentCard.sprite.setPosition(958, 475);
     setCurrentCard(cardDeck.at(randomNum));
     currentCard.sprite.setScale(Vector2f(1.6f, 1.6f));
-    cardDeck.erase(cardDeck.begin() + randomNum);
+    //cardDeck.erase(cardDeck.begin() + randomNum);
     cout << "size " << cardDeck.size() << endl;
 
     //встановлюємл зображення карти-вигуку "uno"
@@ -89,11 +94,11 @@ unoCards Uno::takeCard()
 {
     srand(time(NULL));
     unoCards tempCard;
-    int num = rand() % cardDeck.size();
-    tempCard.color = cardDeck.at(num).color;
-    tempCard.sprite = cardDeck.at(num).sprite;
-    tempCard.symbol = cardDeck.at(num).symbol;
-    cardDeck.erase(cardDeck.begin() + num);
+    int num = rand() % availableCards.size();
+    tempCard.color = cardDeck.at(availableCards.at(num)).color;
+    tempCard.sprite = cardDeck.at(availableCards.at(num)).sprite;
+    tempCard.symbol = cardDeck.at(availableCards.at(num)).symbol;
+    availableCards.erase(availableCards.begin() + num);
     return tempCard;
 }
 
@@ -115,7 +120,8 @@ void Uno::showAllElements(RenderWindow& window)
 
 Uno::~Uno()
 {
-    for (int i = 0; i < cardDeck.size(); i++) {
-        cardDeck.pop_back();
-    }
+    if (!cardDeck.empty())
+        cardDeck.clear();
+    if (!availableCards.empty())
+        availableCards.clear();
 }

@@ -16,6 +16,7 @@ using namespace sf;
 #include "GameMenu.h"
 #include "BattleShip.h"
 #include "gameText.h"
+#include "Music.h"
 #include "Board.h"
 #include "Piece.h"
 #include "Uno.h"
@@ -1832,6 +1833,7 @@ class UnoGame : public Strategy
 {
     void DoAlgorithm(RenderWindow& window, int width, int height) const override
     {
+
         RectangleShape bg(Vector2f(width, height));
         Texture bgTexture;
         bgTexture.loadFromFile("Uno/unoBG.jpg");
@@ -1891,7 +1893,21 @@ class UnoGame : public Strategy
         }
         bool endOfGame = false;
         int itemOfcard;//буде приходити цифра 0 -- якщо просто цифра на карті, 1 -- пропустити хід, 2 -- зміна напрямку ходу, 3 -- +2, 4 -- змінити колір, 5 -- +4 і змінити колір
-        gameText text;
+        Font font;
+        font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
+        Text text;
+        text.setFont(font);
+        text.setCharacterSize(30);
+        text.setFillColor(Color(251, 251, 0));
+        text.setPosition(Vector2f(700.f, 690.f));
+        class::Music sound;
+
+        Texture txt;
+        txt.loadFromFile("Uno/endGameBG.png");
+        Sprite sp;
+        sp.setTexture(txt);
+        sp.setPosition(Vector2f(780.f, 380.f));
+
         while (window.isOpen()) {
             Event event;
             while (window.pollEvent(event)) {
@@ -1899,7 +1915,7 @@ class UnoGame : public Strategy
                 if (event.key.code == Keyboard::Escape) {
                     ClientCode(window, width, height);
                 }
-                if (event.type == Event::MouseButtonPressed) {
+                if (event.type == Event::MouseButtonPressed && endOfGame == false) {
                     if (event.mouseButton.button == Mouse::Left && player.getTurn() == true) {
                         sf::Vector2f playPos = { (float)Mouse::getPosition().x,(float)Mouse::getPosition().y };
                         if (playerPicksColor == true) {
@@ -1919,11 +1935,13 @@ class UnoGame : public Strategy
                             playersTurn(player, opponent);
                         }
                         else if (unoTable.hiddenCardDeck.getGlobalBounds().contains(playPos.x, playPos.y)) {
+                            sound.setMusic("flipcard.wav");
                             setCardParameters(unoTable.takeCard(), temp);
                             player.addCard(temp);
                             opponentsTurn(player, opponent);
                         }
                         else {
+                            sound.setMusic("flipcard.wav");
                             setCardParameters(player.pushCard(playPos), temp);
                             unoTable.setCurrentCard(temp);
                             opponent.setCardToBeat(temp);
@@ -1935,31 +1953,35 @@ class UnoGame : public Strategy
                             case 3: {playersTurn(player, opponent); for (int i = 0; i < 2; i++) { setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); } }; break;
                             case 4: {playersTurn(player, opponent); playerPicksColor = true; }; break;
                             case 5: {playerPicksColor = true; playersTurn(player, opponent); for (int i = 0; i < 4; i++) {
-                                setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp); } }; break;
+                                setCardParameters(unoTable.takeCard(), temp); opponent.addCard(temp);
+                            } }; break;
                             }
                         }
                         if (player.isEmpty() == true) {
-                            window.clear(Color(178, 178, 178));
-                            text.setFontString("Fonts/LeagueSpartan-Bold.ttf");
-                            text.setString("You won!!! \n Press Escape to exit");
-                            text.setFontsize(100);
-                            text.setColor(Color::Black);
-                            text.showString(window, 700, 450);
+                            text.setString("You won!!! Press Escape to exit");
                             endOfGame = true;
                         }
                     }
                 }
             }
-            window.clear();
-            if (endOfGame == true) {
-                text.showString(window, 700, 450);
+            if (unoTable.isEmpty() == true) {
+                text.setString("Draw. Press Escape to exit");
+                endOfGame = true;
             }
+            window.clear();
             window.draw(bg);
-            unoTable.showAllElements(window);
+
             player.showElements(window);
             opponent.showElements(window);
             for (int i = 0; i < 4; i++) {
                 window.draw(colorsToPick.at(i));
+            }
+            if (endOfGame == true) {
+                window.draw(sp);
+                window.draw(text);
+            }
+            else {
+                unoTable.showAllElements(window);
             }
             window.display();
             if (opponent.getTurn() == true && endOfGame == false) {
@@ -1969,6 +1991,7 @@ class UnoGame : public Strategy
                     opponentPicksColor = false;
                     opponentsTurn(player, opponent);
                 }
+                sound.setMusic("flipcard.wav");
                 setCardParameters(unoTable.getCurrentCard(), temp);
                 opponent.setCardToBeat(temp);
                 setCardParameters(opponent.pushCard(), temp);
@@ -1986,29 +2009,33 @@ class UnoGame : public Strategy
                     }
                 }
                 else {
+                    sound.setMusic("flipcard.wav");
                     setCardParameters(unoTable.takeCard(), temp);
                     opponent.addCard(temp);
                     playersTurn(player, opponent);
                 }
                 if (opponent.isEmpty() == true) {
-                    text.setFontString("Fonts/LeagueSpartan-Bold.ttf");
-                    text.setString("You lost!!! \n Press Escape to exit");
-                    text.setFontsize(100);
-                    text.setColor(Color::Black);
-                    text.showString(window, 700, 450);
+                    text.setString("You lost!!! Press Escape to exit");
                     endOfGame = true;
                 }
             }
-            window.clear();
-            if (endOfGame == true) {
-                text.showString(window, 700, 450);
+            if (unoTable.isEmpty() == true) {
+                text.setString("Draw. Press Escape to exit");
+                endOfGame = true;
             }
+            window.clear();
             window.draw(bg);
-            unoTable.showAllElements(window);
             player.showElements(window);
             opponent.showElements(window);
             for (int i = 0; i < 4; i++) {
                 window.draw(colorsToPick.at(i));
+            }
+            if (endOfGame == true) {
+                window.draw(sp);
+                window.draw(text);
+            }
+            else {
+                unoTable.showAllElements(window);
             }
             window.display();
         }
