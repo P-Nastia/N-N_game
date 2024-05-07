@@ -304,7 +304,6 @@ bool BattleShip::checkForCorrectness(int x, int y, RenderWindow& window) {
 			if (it2 != secondShipFor3.end()) {
 				secondShipFor3.erase(it2);
 			}
-
 		}
 		cout << "FirstShip " << endl << endl;
 		for (auto i : firstShipFor3) {

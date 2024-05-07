@@ -33,10 +33,10 @@ private:
     string wordToGuess;//саме слово, яке потрібно вгадати
     char* hiddenWordToGuess;//лише невідгадані символи "_" на екрані, які сетяться в separatedLettersOfWord
     Text* separatedLettersOfWord;//символи "_" на екрані
-
     string fileNameToOpen;//файл, з якого завантажуємо слово, яке обирається по рандомайзеру
     int wordLength;
-
+    Texture t;//текстура для картинки про закінчення гри
+    Sprite gameOver;
 
 public:
     Hangman(string fileNameToOpen);

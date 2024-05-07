@@ -2277,7 +2277,6 @@ void playersTurn(gameText& text, BattleShip& enemy, BattleShip& player) {
     text.setString("Your turn");
 }
 
-
 void startHangman(string hmType, RenderWindow& window, int width, int height) {
     Hangman hangmanGame(hmType);
     while (window.isOpen())
@@ -2314,7 +2313,7 @@ void startHangman(string hmType, RenderWindow& window, int width, int height) {
                 if (event_opt.key.code == Keyboard::Subtract)
                     hangmanGame.music.VolumeDown();
                 if (event_opt.key.code == Keyboard::Space)
-                    hangmanGame.showElements(window);
+                    startHangman(hmType, window, width, height);
             }
         }
         window.clear();
