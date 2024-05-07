@@ -58,7 +58,6 @@ namespace snake {
     const int window_width = field_size_x * cell_size;   //Ширина вікна гри, залежна від розмірів поля та клітинок
     const int window_height = field_size_y * cell_size + score_bar_height;   //Висота вікна гри, залежна від розмірів поля, клітинок та висоти панелі рахунку
 
-
     // Структура для зберігання стану гри
     struct GameState {
         int field[field_size_y][field_size_x];   // Поле гри
@@ -548,7 +547,6 @@ namespace ticTacToe {
         char xod;
     };
 
-    void start_game(RenderWindow& window, int width, int height); /*Відображає стартове меню гри та визначає послідовність виклику функцій залежно від типу гри*/
     void setup(int*, bool*); /*Функція ініціалізації прапорних змінних*/
     void type_symbol(bool*, char*, char*, int); /*Функція рандомно визначає хто гратиме за X а хтось за O*/
     void clear_field(); /*Функція очищує ігрові поля*/
@@ -563,135 +561,11 @@ namespace ticTacToe {
     void smart_learn(Stack*, int, int, DataBase*); /*Рекурсивна функція навчання, зменшує вагу ходу у разі програшу, і збільшує навпаки, нічия нейтрально*/
 
     void display_statistic(RenderWindow&, int, int, int); /*Виводить статистику*/
-    void menu_graph(RenderWindow& window, RenderWindow& Window, int width, int height, int* type_game, Event event, bool game_over = false); /*Виводить меню гри*/
+    void menu_graph(RenderWindow&, int*, Event, bool game_over = false); /*Виводить меню гри*/
     void display_field(RenderWindow&, char, char, bool game_over = false); /*Виводить ігрову підлогу*/
     int move_human(RenderWindow&); /*Повертає перебіг людини*/
     void wins_victory(RenderWindow&, Wins*); /*Виводить смугу при перемозі*/
     void progress_bar(RenderWindow&, int); /*Виводить ProgressBar під час навчання Smart*/
-
-    int main(RenderWindow& window, int width, int height)
-    {
-        window.close();
-        setlocale(0, "");
-        srand(unsigned(time(0)));
-
-        start_game(window, width, height);
-
-        delete[] Collections_X;
-        delete[] Collections_O;
-        return 0;
-    }
-
-    void start_game(RenderWindow& Window, int width, int height)
-    {
-        RenderWindow window(VideoMode(800, 600), L"Tic-Tac-Teo AI");
-        Image icon;
-        icon.loadFromFile("tic.png");
-        window.setIcon(32, 32, icon.getPixelsPtr());//setIcon(128, 128, icon.getPixelsPtr())
-        Texture textureFon;
-        Sprite spritefon;
-        textureFon.loadFromFile("fon.png");
-        spritefon.setTexture(textureFon);
-        spritefon.setPosition(0, 0);
-
-        int type_game = 0; /*тип гри, Random або Smart*/
-        int x_wins = 0, o_wins = 0, d_wins = 0; /*накопичувальні змінні для стати*/
-
-        int move = NULL; /*Змінна містить хід*/
-        bool turn = NULL; /*Черга ходу*/
-        char player_1 = NULL, player_2 = NULL; /*символьні змінні хто за що грає*/
-        int draw = 0; /*Сума ходів двох гравців*/
-        bool game_over = false; /*Прапорна: кінець гри*/
-        Wins* Win = new Wins; /* Містить переможну комбінацію і хто виграв*/
-
-        while (window.isOpen())
-        {
-            Event event;
-            while (window.pollEvent(event))
-            {
-                if (event.type == Event::Closed) {
-                    window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-                    float width = VideoMode::getDesktopMode().width;//ширина екрана
-                    float height = VideoMode::getDesktopMode().height;//висота екрана
-                    ClientCode(Window, width, height);
-                }
-            }
-            if (type_game == 0)
-            {
-                window.clear();
-                window.draw(spritefon);
-                if (game_over == true)
-                {
-                    display_field(window, player_1, player_2, game_over);
-                    wins_victory(window, Win);
-                }
-                menu_graph(window, Window,width,height,&type_game, event, game_over);
-                display_statistic(window, x_wins, o_wins, d_wins);
-                window.display();
-                if (type_game == 1 || type_game == 2)
-                {
-                    setup(&draw, &game_over);
-                    type_symbol(&turn, &player_1, &player_2, type_game);
-                    window.clear();
-                    window.draw(spritefon);
-                }
-            }
-            if (type_game == 3)
-            {
-                int line_bar = 0;
-                for (int i = 0; i < NUMBER_OF_GAMES; i++)
-                {
-                    if (i % (NUMBER_OF_GAMES / 700) == 0)
-                    {
-                        progress_bar(window, line_bar += 1);
-                    }
-                    setup(&draw, &game_over);
-                    type_symbol(&turn, &player_1, &player_2, type_game);
-                    Stack* Hystory = nullptr;
-                    int stack_size = 0;
-                    while (game_over != true)
-                    {
-                        move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
-                        draw++;
-                        game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
-                    }
-                    delete[] Hystory;
-                }
-                type_game = 0;
-            }
-            else if (type_game == 1 || type_game == 2)
-            {
-                window.clear();
-                window.draw(spritefon);
-                display_field(window, player_1, player_2);
-                display_statistic(window, x_wins, o_wins, d_wins);
-                window.display();
-                Stack* Hystory = nullptr;
-                int stack_size = 0;
-                if (turn)
-                {
-                    move = -1;
-                    do
-                    {
-                        move = move_human(window);
-
-                    } while (move == -1 || Field[move] == 'X' || Field[move] == 'O');
-                }
-                else
-                {
-                    move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
-                }
-                draw++;
-                game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
-                if (game_over == true)
-                {
-                    stack_size = 0; delete[] Hystory;
-                    type_game = 0;
-                }
-            }
-        }
-        delete Win;
-    }
 
     int input_events(bool* turn, int type_game, Stack** Hystory, int* stack_size, char player_1, char player_2)
     {
@@ -751,7 +625,7 @@ namespace ticTacToe {
         int* x_wins, int* o_wins, int* d_wins, bool* game_over, Stack** Hystory, int* stack_size, Wins* Win)
     {
         bool wins = false;
-        if ((*turn && type_game == 1) || (*turn && type_game == 2))/*Гілка Людини*/
+        if ((*turn && type_game == 1) || (*turn && type_game == 2))/*ó��� ������*/
         {
             Field[move] = player_1;
             check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
@@ -770,41 +644,7 @@ namespace ticTacToe {
             }
             *turn = false;
         }
-        else if ((*turn && type_game == 3) || type_game == 2) /*Гілка Smart гравця*/
-        {
-            if (type_game == 2)
-            {
-                Field[move] = player_2;
-            }
-            else
-            {
-                Field[move] = player_1;
-            }
-            check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
-            if (wins)
-            {
-                if (Win->xod != 'D' && player_2 == 'X' && type_game == 2)
-                {
-                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_X);
-                }
-                else if (Win->xod != 'D' && player_2 == 'O' && type_game == 2)
-                {
-                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_O);
-                }
-                else if (Win->xod != 'D' && player_1 == 'X' && type_game == 3)
-                {
-                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_X);
-                }
-                else if (Win->xod != 'D' && player_1 == 'O' && type_game == 3)
-                {
-                    smart_learn(*Hystory, *stack_size - 1, STEP_LEARN, Collections_O);
-                }
-                *game_over = true;
-                return;
-            }
-            type_game == 2 ? *turn = true : *turn = false;
-        }
-        else /*Гілка Random гравця*/
+        else /*ó��� Random ������*/
         {
             Field[move] = player_2;
             check_wins(draw, type_game, x_wins, o_wins, d_wins, &wins, Win);
@@ -1072,22 +912,11 @@ namespace ticTacToe {
         text_8.setFillColor(Color(34, 139, 34));
         text_9.setFillColor(Color(34, 139, 34));
 
-        text_2.setString(L"Перемоги X");
-        text_3.setString(L"Перемоги O");
-        text_4.setString(L"Нічиї");
-        text_9.setString(L"Усього провели ігор: ");
+        text_2.setString("Wins X");
+        text_3.setString("Wins O");
+        text_4.setString("Draws");
+        text_9.setString("Games in total: ");
 
-        //це мій код який я виправила
-
-        /*text_5.setString(_itoa(x_wins, x, 10));
-        text_6.setString(_itoa(o_wins, o, 10));
-        text_7.setString(_itoa(d_wins, d, 10));
-        text_8.setString(_itoa(summ, s, 10));*/
-
-
-        //це код який запропонував мені chat gpt
-
-        //char x[7], o[7], d[7], s[7];
 
         _itoa_s(x_wins, x, 10);
         _itoa_s(o_wins, o, 10);
@@ -1099,14 +928,15 @@ namespace ticTacToe {
         text_7.setString(d);
         text_8.setString(s);
 
-        text_2.setPosition(75, 400);
-        text_3.setPosition(355, 400);
-        text_4.setPosition(650, 400);
-        text_5.setPosition(75, 450);
-        text_6.setPosition(355, 450);
-        text_7.setPosition(650, 450);
-        text_8.setPosition(500, 520);
-        text_9.setPosition(250, 520);
+        //+20\+50
+        text_2.setPosition(95, 450);//
+        text_3.setPosition(375, 450);//
+        text_4.setPosition(670, 450);//
+        text_5.setPosition(95, 500);//
+        text_6.setPosition(375, 500);//
+        text_7.setPosition(670, 500);//
+        text_8.setPosition(520, 570);//
+        text_9.setPosition(270, 570);//
 
         window.draw(text_9); window.draw(text_2);
         window.draw(text_3); window.draw(text_4);
@@ -1114,14 +944,13 @@ namespace ticTacToe {
         window.draw(text_7); window.draw(text_8);
     }
 
-    /////////////////////////
-    void menu_graph(RenderWindow& window, RenderWindow& Window,int width,int height, int* type_game, Event event, bool game_over)
+    void menu_graph(RenderWindow& window, int* type_game, Event event, bool game_over)
     {
         Texture logo;
         Sprite spritelogo;
         logo.loadFromFile("logo.png");
         spritelogo.setTexture(logo);
-        spritelogo.setPosition(10, 30);
+        spritelogo.setPosition(10, 60);
 
         Text menu_0, menu_1, menu_2, menu_3, menu_4;
         Font font;
@@ -1139,45 +968,28 @@ namespace ticTacToe {
 
         menu_0.setStyle(Text::Underlined);
 
-        menu_0.setString(L"Виберіть варіант гри");
-        menu_1.setString(L"Пробна гра Random");
-        menu_2.setString(L"Проти Smart гравця");
-        menu_3.setString(L"+10000 партій з Random ");
-        menu_4.setString(L"Вихід");
+        menu_0.setString(" Menu ");
+        menu_1.setString("Play");
+        menu_4.setString("Exit");
 
-        menu_0.setPosition(430, 70);
-        menu_1.setPosition(450, 130);
-        menu_2.setPosition(450, 190);
-        menu_3.setPosition(450, 250);
-        menu_4.setPosition(560, 300);
+        menu_0.setPosition(600, 50);//
+        menu_1.setPosition(600, 130);//
+        menu_4.setPosition(600, 190);//
 
-        if (IntRect(450, 130, 320, 30).contains(Mouse::getPosition(window)))
+        if (IntRect(600, 130, 320, 30).contains(Mouse::getPosition(window)))//
         {
             menu_1.setFillColor(Color::Blue);
             if (event.type == Event::MouseButtonReleased)
                 if (event.mouseButton.button == Mouse::Left) *type_game = 1;
         }
 
-        if (IntRect(450, 190, 320, 30).contains(Mouse::getPosition(window)))
-        {
-            menu_2.setFillColor(Color::Blue);
-            if (event.type == Event::MouseButtonReleased)
-                if (event.mouseButton.button == Mouse::Left) *type_game = 2;
-        }
-        if (IntRect(450, 250, 320, 30).contains(Mouse::getPosition(window)))
-        {
-            menu_3.setFillColor(Color::Blue);
-            if (event.type == Event::MouseButtonReleased)
-                if (event.mouseButton.button == Mouse::Left) *type_game = 3;
-        }
-        if (IntRect(560, 300, 100, 30).contains(Mouse::getPosition(window)))
+        if (IntRect(600, 190, 320, 30).contains(Mouse::getPosition(window)))//
         {
             menu_4.setFillColor(Color::Black);
             if (event.type == Event::MouseButtonReleased)
-                if (event.mouseButton.button == Mouse::Left) { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-            float width = VideoMode::getDesktopMode().width;//ширина екрана
-            float height = VideoMode::getDesktopMode().height;//висота екрана
-            ClientCode(Window, width, height); }
+                if (event.mouseButton.button == Mouse::Left) {
+                    ClientCode(window, 1920, 1080);
+                }
         }
 
         window.draw(menu_0); window.draw(menu_1);
@@ -1212,14 +1024,14 @@ namespace ticTacToe {
         font.loadFromFile("comic.ttf");
 
         text_1.setFont(font);
-        text_1.setCharacterSize(25);
-        text_1.setString(L"Визначено, що ви граєте за ");
+        text_1.setCharacterSize(30);
+        text_1.setString(" You`re playing for ");
         text_2.setFont(font);
-        text_2.setCharacterSize(25);
-        text_2.setString(L"Противник грає за ");
+        text_2.setCharacterSize(30);
+        text_2.setString("Opponent is playing for ");
         text_3.setFont(font);
-        text_3.setCharacterSize(25);
-        text_3.setString(L"Хрестики ходять першими!");
+        text_3.setCharacterSize(30);
+        text_3.setString(" Xs take first turn!");
         text_3.setFillColor(Color(65, 105, 255));
 
         type_char_1.setFont(font);
@@ -1401,9 +1213,6 @@ namespace ticTacToe {
     }
 }
 
-
-///////////////////////////////
-
 auto coordsForOpponent(multimap<int, int>& map, int pos) {
     int count = 0;
     int x, y;
@@ -1426,7 +1235,6 @@ void setText(Text& menuText, float xPos, float yPos, String str, int fontSize = 
 }
 void startHangman(string hmType, RenderWindow& window, int width, int height);
 
-///////////////////////////////////
 class Strategy
 {
 public:
@@ -2198,10 +2006,121 @@ public:
     }
 };
 
+class TicTacToe :public Strategy {
+public:
+    void DoAlgorithm(RenderWindow& Window, int width, int height) const override {
+        Window.close();
+        RenderWindow window(VideoMode(850, 650), L"Tic-Tac-Teo AI");
+        Image icon;
+        icon.loadFromFile("tic.png");
+        window.setIcon(32, 32, icon.getPixelsPtr());
+        Texture textureFon;
+        Sprite spritefon;
+        textureFon.loadFromFile("fon2.png");
+        spritefon.setTexture(textureFon);
+        spritefon.setPosition(0, 0);
+
+        int type_game = 0;
+        int x_wins = 0, o_wins = 0, d_wins = 0;
+        int move = NULL;
+        bool turn = NULL;
+        char player_1 = NULL, player_2 = NULL;
+        int draw = 0;
+        bool game_over = false;
+        ticTacToe::Wins* Win = new ticTacToe::Wins;
+
+
+        while (window.isOpen()) {
+            Event event;
+            while (window.pollEvent(event)) {
+                if (event.type == Event::Closed)
+                    window.close();
+            }
+
+            if (type_game == 0) {
+                window.clear();
+                window.draw(spritefon);
+                if (game_over == true) {
+                    ticTacToe::display_field(window, player_1, player_2, game_over);
+                    wins_victory(window, Win);
+                }
+                ticTacToe::menu_graph(window, &type_game, event, game_over);
+                ticTacToe::display_statistic(window, x_wins, o_wins, d_wins);
+                window.display();
+                if (type_game == 1 || type_game == 2) {
+                    ticTacToe::setup(&draw, &game_over);
+                    ticTacToe::type_symbol(&turn, &player_1, &player_2, type_game);
+                    window.clear();
+                    window.draw(spritefon);
+                }
+            }
+            if (type_game == 3)
+            {
+                int line_bar = 0;
+                for (int i = 0; i < ticTacToe::NUMBER_OF_GAMES; i++)
+                {
+                    if (i % (ticTacToe::NUMBER_OF_GAMES / 700) == 0)
+                    {
+                        ticTacToe::progress_bar(window, line_bar += 1);
+                    }
+                    ticTacToe::setup(&draw, &game_over);
+                    ticTacToe::type_symbol(&turn, &player_1, &player_2, type_game);
+                    ticTacToe::Stack* Hystory = nullptr;
+                    int stack_size = 0;
+                    while (game_over != true)
+                    {
+                        move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
+                        draw++;
+                        game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
+                    }
+                    delete[] Hystory;
+                }
+                type_game = 0;
+            }
+            else if (type_game == 1 || type_game == 2)
+            {
+                window.clear();
+                window.draw(spritefon);
+                ticTacToe::display_field(window, player_1, player_2);
+                ticTacToe::display_statistic(window, x_wins, o_wins, d_wins);
+                window.display();
+                ticTacToe::Stack* Hystory = nullptr;
+                int stack_size = 0;
+                if (turn)
+                {
+                    move = -1;
+                    do
+                    {
+                        move = ticTacToe::move_human(window);
+
+                    } while (move == -1 || ticTacToe::Field[move] == 'X' || ticTacToe::Field[move] == 'O');
+                }
+                else
+                {
+                    move = input_events(&turn, type_game, &Hystory, &stack_size, player_1, player_2);
+                }
+                draw++;
+                game_logic(move, &draw, &turn, type_game, player_1, player_2, &x_wins, &o_wins, &d_wins, &game_over, &Hystory, &stack_size, Win);
+                if (game_over == true)
+                {
+                    stack_size = 0; delete[] Hystory;
+                    type_game = 0;
+                }
+            }
+        }
+        delete Win;
+        delete[] ticTacToe::Collections_X;
+        delete[] ticTacToe::Collections_O;
+    }
+};
+
 void ClientCode(RenderWindow& mainWindow, int width, int height)
 {
     ::Context* context = new ::Context();
-
+    Vector2u size = mainWindow.getSize();
+    if (size.x < 1920 && size.y < 1080) {
+        mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu", Style::Fullscreen);
+    }
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
     windowTexture.loadFromFile("Images/mainMenuBg.jpg");
@@ -2226,13 +2145,12 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
                 }
                 if (event.key.code == Keyboard::Down) {
                     menu.moveDown();
-
                 }
                 if (event.key.code == Keyboard::Enter) {
                     switch (menu.getMenuSelected()) {
-                    case 0: {ticTacToe::main(mainWindow, width, height); }; break;
+                    case 0: {context->set_strategy(new TicTacToe); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;//{ticTacToe::main(mainWindow, width, height); }; break;
                     case 1: {context->set_strategy(new HangmanMenu); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
-                    case 2: { context->set_strategy(new Snake); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
+                    case 2: {context->set_strategy(new Snake); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 3: {context->set_strategy(new BattleShipGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 4: {context->set_strategy(new Checkers); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 5: {context->set_strategy(new UnoGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
@@ -2253,7 +2171,6 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
     delete context;
 }
 
-
 int main()
 {
     SetConsoleCP(1251);
@@ -2263,6 +2180,7 @@ int main()
     float width = VideoMode::getDesktopMode().width;//ширина екрана
     float height = VideoMode::getDesktopMode().height;//висота екрана
     ClientCode(mainWindow, width, height);
+    //TicTacToe::main();
 }
 
 
