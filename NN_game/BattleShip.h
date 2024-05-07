@@ -5,11 +5,14 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <map>
+#include <string>
+#include "gameText.h"
 using namespace sf;
 using namespace std;
 class BattleShip
 {
 protected:
+	string whose;//чи поле гравц€ чи суперника
 	vector<vector<char>> fullField;//поле, з €кого зв≥р€Їтьс€ попаданн€
 	vector<vector<char>> shotsVector;//пол€, з €ких зв≥р€Їтьс€ повтор ходу
 	vector<vector<char>> playingField;//поле, в €кому м≥ст€тьс€ лише ходи гравц€ 
@@ -17,23 +20,28 @@ protected:
 	string fileName;//файл, з €кого завантажуЇтьс€ поле
 	vector<vector<Texture>> cellTexture;//текстура кл≥тинок
 	vector<vector<Sprite>> cellSprite;//спрайт кл≥тинок
+	vector<Texture> shipsTextures;//текстури дл€ картинок корабл≥в
+	vector<Sprite> shipsSprite;//картинки корабл≥в опонента, по €ких ор≥Їнтуютьс€ ск≥льки залишилос€ збити
 	bool myTurn;//чий х≥д
 	Texture coordsTexture[20];//текстури дл€ цифр ≥ букв
 	Sprite coordsSprite[20];//спрайт дл€ них
 	multimap<int, int> firstShipFor3;//щоби не робити ще б≥льше перев≥рок в checkForCompleteness, координати корабл€ будуть збер≥гатис€ в мап≥
 	multimap<int, int> secondShipFor3;
 	multimap<int, int> shipFor4;//щоби не робити ще б≥льше перев≥рок в checkForCompleteness, координати корабл€ будуть збер≥гатис€ в мап≥
+	int countForShips[4];//масив з к≥лькост≥ збитих корабл≥в
+	gameText countForShipsText[4] = { {"0 x ","Fonts/LeagueSpartan-Bold.ttf"},{"0 x ","Fonts/LeagueSpartan-Bold.ttf"},
+		{"0 x ","Fonts/LeagueSpartan-Bold.ttf" },{"0 x ","Fonts/LeagueSpartan-Bold.ttf"} };//масив дл€ виводу тексту з к≥лькост≥ збитих корабл≥в
 	bool isFirstHorizontal = false;//чи перший корабель на 3 кл≥тинки розташований горизонтально
 	bool isSecondHorizontal = false;
 	bool whichShip = false;//чи координати знаход€тьс€ в першому(false) чи другому(true) корабл≥ на 3 кл≥тинки
 	void loadForEnemy(int num);//завантажити назву мапи дл€ суперника
 	void loadForPlayer(int num);//завантажити назву мапи дл€ ≥грака
-	void loadField(string whoseField);//завантажуЇ поле в fullField
+	void loadField();//завантажуЇ поле в fullField
 	void loadCommonFeature();//завантажуЇ текстуру цифр та букв у спрайт, встановлюЇ розм≥р
 	void loadPlayerCoords();//завантажуЇ координати цифр та букв дл€ ≥грака
 	void loadEnemyCoords();//завантажуЇ координати цифр та букв дл€ суперника
 	void loadShipFor3();//завантажуЇ координати в firstShipFor3 та secondShipFor3
-
+	void changeCounter(int shotInto);//зм≥нити к≥льк≥сть збитих корабл≥в
 public:
 	BattleShip(string whoseField);//конструктор: викликаЇ loadField,loadCommonFeature, завантажуЇ все в спрайти, вектор shotsVector, playingField
 	bool checkForCorrectness(int x, int y, RenderWindow& window);//перев≥рка на попаданн€

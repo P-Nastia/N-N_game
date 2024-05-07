@@ -28,7 +28,6 @@ void playersTurn(Player& player, Opponent& opponent);
 void opponentsTurn(Player& player, Opponent& opponent);
 void ClientCode(RenderWindow& mainWindow, int width, int height);
 
-
 namespace snake {
    
     // Типи клітинок на ігровому полі
@@ -510,218 +509,6 @@ namespace snake {
             game_state.field[game_state.snake_position_y][game_state.snake_position_x] = game_state.snake_length;
         }
     }
-
-    //int main(RenderWindow& Window, int width, int height)
-    //{
-    //    Window.close();
-    //    init_game();
-
-    //    sf::RenderWindow window(sf::VideoMode(window_width, window_height), "Snake", sf::Style::Close);
-
-    //    std::vector<int> snake_direction_queue;
-
-    //    while (window.isOpen())
-    //    {
-    //        sf::Event event;
-    //        while (window.pollEvent(event))
-    //        {
-    //            if (event.type == sf::Event::Closed) {
-    //                snake_direction_queue.clear();
-    //                window.close();
-    //                Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-    //                float width = VideoMode::getDesktopMode().width;
-    //                float height = VideoMode::getDesktopMode().height;
-    //                ClientCode(Window, width, height);
-    //            }
-    //            if (event.type == sf::Event::KeyPressed) {
-    //                if (game_paused) {
-    //                    if (game_over_timeout == 0) {
-    //                        if (current_menu == MENU_MAIN) {
-    //                            switch (event.key.code) {
-    //                            case sf::Keyboard::Up:
-    //                                sound_menu_navigate.play();
-    //                                current_main_menu_item_index--;
-    //                                if (current_main_menu_item_index < 0) {
-    //                                    current_main_menu_item_index = text_main_menu_items.size() - 1;
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Down:
-    //                                sound_menu_navigate.play();
-    //                                current_main_menu_item_index++;
-    //                                if (current_main_menu_item_index > text_main_menu_items.size() - 1) {
-    //                                    current_main_menu_item_index = 0;
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Enter:
-    //                                sound_menu_navigate.play();
-    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_START) {
-    //                                    if (!game_over && game_started) {
-    //                                        game_paused = false;
-    //                                    }
-    //                                    else {
-    //                                        start_game();
-    //                                    }
-    //                                }
-    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_SETTINGS) {
-    //                                    current_menu = MENU_SETTINGS;
-    //                                    current_settings_menu_item_index = 0;
-    //                                }
-    //                                if (main_menu_items.at(current_main_menu_item_index) == MENU_ITEM_QUIT) {
-    //                                    window.close();
-    //                                    Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-    //                                    float width = VideoMode::getDesktopMode().width;//ширина екрана
-    //                                    float height = VideoMode::getDesktopMode().height;//висота екрана
-    //                                    ClientCode(Window, width, height);
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Escape:
-    //                                sound_menu_navigate.play();
-    //                                if (!game_over && game_started) {
-    //                                    game_paused = false;
-    //                                }
-    //                                break;
-    //                            }
-    //                        }
-    //                        else if (current_menu == MENU_SETTINGS) {
-    //                            switch (event.key.code) {
-    //                            case sf::Keyboard::Up:
-    //                                sound_menu_navigate.play();
-    //                                current_settings_menu_item_index--;
-    //                                if (current_settings_menu_item_index < 0) {
-    //                                    current_settings_menu_item_index = text_settings_menu_items.size() - 1;
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Down:
-    //                                sound_menu_navigate.play();
-    //                                current_settings_menu_item_index++;
-    //                                if (current_settings_menu_item_index > text_settings_menu_items.size() - 1) {
-    //                                    current_settings_menu_item_index = 0;
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Left:
-    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
-    //                                    if (settings_volume > 0) {
-    //                                        settings_volume -= 5;
-    //                                        set_volume();
-    //                                        sound_menu_navigate.play();
-    //                                    }
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Right:
-    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_VOLUME) {
-    //                                    if (settings_volume < 100) {
-    //                                        settings_volume += 5;
-    //                                        set_volume();
-    //                                        sound_menu_navigate.play();
-    //                                    }
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Enter:
-    //                                sound_menu_navigate.play();
-    //                                if (settings_menu_items.at(current_settings_menu_item_index) == MENU_ITEM_BACK) {
-    //                                    current_menu = MENU_MAIN;
-    //                                }
-    //                                break;
-    //                            case sf::Keyboard::Escape:
-    //                                sound_menu_navigate.play();
-    //                                current_menu = MENU_MAIN;
-    //                                break;
-    //                            }
-    //                        }
-    //                    }
-    //                    else {
-    //                        game_over_timeout = 0;
-    //                    }
-    //                }
-    //                else {
-    //                    int snake_direction_last = snake_direction_queue.empty() ? game_state.snake_direction : snake_direction_queue.at(0);
-    //                    switch (event.key.code) {
-    //                    case sf::Keyboard::Up:
-    //                        if (snake_direction_last != SNAKE_DIRECTION_UP && snake_direction_last != SNAKE_DIRECTION_DOWN) {
-    //                            if (snake_direction_queue.size() < 2) {
-    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_UP);
-    //                            }
-    //                        }
-    //                        break;
-    //                    case sf::Keyboard::Right:
-    //                        if (snake_direction_last != SNAKE_DIRECTION_RIGHT && snake_direction_last != SNAKE_DIRECTION_LEFT) {
-    //                            if (snake_direction_queue.size() < 2) {
-    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_RIGHT);
-    //                            }
-    //                        }
-    //                        break;
-    //                    case sf::Keyboard::Down:
-    //                        if (snake_direction_last != SNAKE_DIRECTION_DOWN && snake_direction_last != SNAKE_DIRECTION_UP) {
-    //                            if (snake_direction_queue.size() < 2) {
-    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_DOWN);
-    //                            }
-    //                        }
-    //                        break;
-    //                    case sf::Keyboard::Left:
-    //                        if (snake_direction_last != SNAKE_DIRECTION_LEFT && snake_direction_last != SNAKE_DIRECTION_RIGHT) {
-    //                            if (snake_direction_queue.size() < 2) {
-    //                                snake_direction_queue.insert(snake_direction_queue.begin(), SNAKE_DIRECTION_LEFT);
-    //                            }
-    //                        }
-    //                        break;
-    //                    case sf::Keyboard::Escape:
-    //                        game_paused = true;
-    //                        break;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //        
-    //        if (!snake_direction_queue.empty()) {
-    //            game_state.snake_direction = snake_direction_queue.back();
-    //            snake_direction_queue.pop_back();
-    //        }
-
-    //        if (!game_paused) {
-    //            if (!rollback) {
-    //                make_move();
-    //            }
-    //            else {
-    //                if (!game_last_states.empty()) {
-    //                    game_state = game_last_states.back();
-    //                    game_last_states.pop_back();
-    //                }
-    //                else {
-    //                    rollback = false;
-    //                }
-    //            }
-    //        }
-
-    //        window.clear(sf::Color(183, 212, 168));
-
-    //        draw_field(window);
-    //        draw_score_bar(window);
-
-    //        if (game_over) {
-    //            window.draw(text_game_over);
-    //            if (game_over_timeout > 0) {
-    //                game_over_timeout--;
-    //            }
-    //        }
-
-    //        if (game_paused && game_over_timeout == 0) {
-    //            switch (current_menu) {
-    //            case MENU_MAIN:
-    //                draw_main_menu(window);
-    //                break;
-    //            case MENU_SETTINGS:
-    //                draw_settings_menu(window);
-    //                break;
-    //            }
-    //        }
-
-    //        window.display();
-
-    //        sf::sleep(sf::milliseconds(100));
-    //    }
-
-    //    return 0;
-    //}
 }
 
 namespace ticTacToe {
@@ -1714,6 +1501,12 @@ public:
         gameText opponentShoot(to_string(countOfDestroyed_by_opponent) + "/10", "Fonts/LeagueSpartan-Bold.ttf");
         opponentShoot.setFontsize(40);
         opponentShoot.setColor(Color::Black);
+        Texture gameOverTexture;//картинка для закінчення гри
+        Sprite gameOver;
+        gameOverTexture.loadFromFile("battleShip/gameOver.png");
+        gameOver.setTexture(gameOverTexture);
+        gameOver.setScale(Vector2f(0.8f, 0.8f));
+        gameOver.setPosition(Vector2f(450.f, 250.f));
         while (window.isOpen()) {
             Event event;
             while (window.pollEvent(event)) {
@@ -1812,19 +1605,22 @@ public:
             player.showField(window);
             enemy.showField(window);
             if (countOfDestroyed_by_opponent == 10 && countOfDestroyed_by_player < 10) {
+                window.draw(gameOver);
                 gameText opponentWin("You lost. Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
-                opponentWin.setColor(Color::Black);
-                opponentWin.setFontsize(100);
-                opponentWin.showString(window, 500, 540);
+                opponentWin.setColor(Color::White);
+                opponentWin.setFontsize(70);
+                opponentWin.showString(window, 460, 590);
             }
             else if (countOfDestroyed_by_player == 10 && countOfDestroyed_by_opponent < 10) {
-                gameText playerWin("You won !!! Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
-                playerWin.setColor(Color::Black);
-                playerWin.setFontsize(100);
-                playerWin.showString(window, 400, 540);
+                window.draw(gameOver);
+                gameText playerWin("You won ! Press 'Escape'", "Fonts/LeagueSpartan-Bold.ttf");
+                playerWin.setColor(Color::White);
+                playerWin.setFontsize(70);
+                playerWin.showString(window, 460, 590);
             }
             window.display();
         }
+        shotsForBot.clear();
     }
 
 };
