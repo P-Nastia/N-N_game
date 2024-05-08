@@ -28,6 +28,64 @@ void playersTurn(Player& player, Opponent& opponent);
 void opponentsTurn(Player& player, Opponent& opponent);
 void ClientCode(RenderWindow& mainWindow, int width, int height);
 
+/////////////
+//патерн Singleton (одинак)
+
+class SettingsManager {
+private:
+    static SettingsManager* instance;
+    // Параметри налаштувань:
+    int antialiasingLevel;
+
+    // Закритий конструктор для обмеження створення екземплярів
+    SettingsManager() : antialiasingLevel(16) {}
+
+public:
+    // Метод для отримання екземпляра класу
+    static SettingsManager* getInstance() {
+        if (instance == nullptr) {
+            instance = new SettingsManager();
+        }
+        return instance;
+    }
+
+    // Метод для отримання значення налаштування antialiasingLevel
+    int getAntialiasingLevel() {
+        return antialiasingLevel;
+    }
+
+    // Метод для встановлення значення antialiasingLevel
+    void setAntialiasingLevel(int level) {
+        antialiasingLevel = level;
+    }
+};
+
+// Ініціалізація статичного члена класу
+SettingsManager* SettingsManager::instance = nullptr;
+
+bool checkWin(Piece* RedPieces, Piece* WhitePieces) {
+    // Перевірте, чи всі фішки одного кольору видалені з дошки
+    int redCount = 0;
+    int whiteCount = 0;
+
+    for (int i = 0; i < 12; i++) {
+        if (RedPieces[i].isAlive) {
+            redCount++;
+        }
+        if (WhitePieces[i].isAlive) {
+            whiteCount++;
+        }
+    }
+
+    // Якщо одна з команд не має жодної фішки, поверніть true
+    if (redCount == 0 || whiteCount == 0) {
+        return true;
+    }
+
+    return false;
+}
+//////////////
+
 namespace snake {
    
     // Типи клітинок на ігровому полі
@@ -559,7 +617,6 @@ namespace ticTacToe {
     int get_situation(DataBase*, int); /*Шукає в базі ситуації, що склалася на полі*/
     int get_smart_random(int, DataBase*); /*Генерує хід Smart гравця на підставі матриці ваг*/
     void smart_learn(Stack*, int, int, DataBase*); /*Рекурсивна функція навчання, зменшує вагу ходу у разі програшу, і збільшує навпаки, нічия нейтрально*/
-
     void display_statistic(RenderWindow&, int, int, int); /*Виводить статистику*/
     void menu_graph(RenderWindow&, int*, Event, bool game_over = false); /*Виводить меню гри*/
     void display_field(RenderWindow&, char, char, bool game_over = false); /*Виводить ігрову підлогу*/
@@ -963,7 +1020,7 @@ namespace ticTacToe {
             it->setFillColor(Color(255, 140, 0));
         }
 
-        menu_0.setFillColor(Color::Black);
+        menu_0.setFillColor(Color::White);
         menu_4.setFillColor(Color(255, 20, 147));
 
         menu_0.setStyle(Text::Underlined);
@@ -1909,12 +1966,18 @@ public:
     }
 };
 
-class Checkers :public Strategy {
+class Draughts :public Strategy {
 public:
     void DoAlgorithm(RenderWindow& Window, int width, int height) const override {
         Window.close();
         ContextSettings settings;
         settings.antialiasingLevel = 16.0;
+        RenderWindow window(sf::VideoMode(600, 600), "Draughts", Style::Default, settings);
+        Texture gameOverTexture;
+        gameOverTexture.loadFromFile("gameover.png");
+        sf::Sprite gameOverSprite;
+        gameOverSprite.setTexture(gameOverTexture);
+        gameOverSprite.setPosition(0, 0); // Встановіть позицію спрайту
         Event event;
         Board board;
         int grid[8][8];
@@ -1923,50 +1986,44 @@ public:
         bool selected = false;
         Piece* SelectedPiece = NULL;
         int turn = 1;
-        VideoMode desktop = VideoMode::getDesktopMode();
-
-        RenderWindow window(sf::VideoMode(600, 600), "Checkers", Style::Default, settings);
 
         for (int i = 0; i < 12; i++) {
             WhitePieces[i].color = Color::White;
             RedPieces[i].color = Color::Red;
         }
 
+
         Setup(window, RedPieces, WhitePieces);
 
         while (window.isOpen()) {
             while (window.pollEvent(event)) {
                 if (event.type == Event::Closed) {
-                    window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-                    float width = VideoMode::getDesktopMode().width;//ширина екрана
-                    float height = VideoMode::getDesktopMode().height;//висота екрана
-                    ClientCode(Window, width, height);
+                    ClientCode(window, 1920, 1080);
                 }
+
                 if (event.type == Event::MouseButtonReleased) {
                     if (event.mouseButton.button == Mouse::Left) {
                         selected = !selected;
                     }
                 }
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-                { window.close(); Window.create(VideoMode::getDesktopMode(), "Menu", Style::Fullscreen);
-                float width = VideoMode::getDesktopMode().width;//ширина екрана
-                float height = VideoMode::getDesktopMode().height;//висота екрана
-                ClientCode(Window, width, height); }
-            }
+
             window.clear();
 
             board.Draw(window);
 
-            int tileSize = window.getSize().x / board.size;
-
-            if (turn == 2) {
-                // Виклик функції AI гравця
-                AIPlayer(WhitePieces, RedPieces, turn);
-            }
-
             if (SelectedPiece != NULL) {
                 board.Highlight(window, SelectedPiece->x, SelectedPiece->y);
+            }
+
+            if (checkWin(RedPieces, WhitePieces)) {
+                // Вивід зображення gameover.png
+                window.draw(gameOverSprite);
+                window.display();
+                // Ви можете додати затримку або інші дії після виводу зображення, наприклад, закрити вікно
+                sf::sleep(sf::seconds(3)); // Затримка на 3 секунди
+                ClientCode(window, 1920, 1080); // Закрити вікно
+                break;
             }
 
             for (int i = 0; i < 12; i++) {
@@ -2016,7 +2073,7 @@ public:
         window.setIcon(32, 32, icon.getPixelsPtr());
         Texture textureFon;
         Sprite spritefon;
-        textureFon.loadFromFile("fon2.png");
+        textureFon.loadFromFile("fon.png");
         spritefon.setTexture(textureFon);
         spritefon.setPosition(0, 0);
 
@@ -2119,12 +2176,16 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
     ::Context* context = new ::Context();
     Vector2u size = mainWindow.getSize();
     if (size.x < 1920 && size.y < 1080) {
-        mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu", Style::Fullscreen);
+        //mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
+        mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu",Style::Fullscreen);
     }
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
     windowTexture.loadFromFile("Images/mainMenuBg.jpg");
     mainBackground.setTexture(&windowTexture);
+    Image icon;
+    icon.loadFromFile("minimetropolisLogo.png");
+    mainWindow.setIcon(468, 464, icon.getPixelsPtr());
     //встановлюємо шрифт для навз категорій
     Font font;
     font.loadFromFile("Fonts/LeagueSpartan-Bold.ttf");
@@ -2132,8 +2193,8 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
     titulText.setFont(font);
     setText(titulText, 480, 50, "Minimetropolis", 150, Color(1, 13, 65), 10);
     //використовуємо клас MainGameMenu
-    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Checkers","Uno","Exit game" };
-    GameMenu menu(mainWindow, 950, 350, 7, menuNames, 80, 100);
+    String menuNames[] = { "Tic tac toe", "Hangman","Snake", "Battleship","Draughts","Uno","Exit game" };
+    GameMenu menu(mainWindow, 900, 350, 7, menuNames, 70, 90);
     menu.setColorsForItems(Color(1, 13, 65), Color(217, 0, 5), Color(56, 108, 160));
     //початок гри
     while (mainWindow.isOpen()) {
@@ -2148,11 +2209,11 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
                 }
                 if (event.key.code == Keyboard::Enter) {
                     switch (menu.getMenuSelected()) {
-                    case 0: {context->set_strategy(new TicTacToe); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;//{ticTacToe::main(mainWindow, width, height); }; break;
+                    case 0: {context->set_strategy(new TicTacToe); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 1: {context->set_strategy(new HangmanMenu); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 2: {context->set_strategy(new Snake); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 3: {context->set_strategy(new BattleShipGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
-                    case 4: {context->set_strategy(new Checkers); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
+                    case 4: {context->set_strategy(new Draughts); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 5: {context->set_strategy(new UnoGame); context->DoSomeBusinessLogic(mainWindow, width, height); }; break;
                     case 6: mainWindow.close(); break;
                     }
@@ -2176,11 +2237,11 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     RenderWindow mainWindow;
+    //mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
     mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu", Style::Fullscreen);
     float width = VideoMode::getDesktopMode().width;//ширина екрана
     float height = VideoMode::getDesktopMode().height;//висота екрана
     ClientCode(mainWindow, width, height);
-    //TicTacToe::main();
 }
 
 

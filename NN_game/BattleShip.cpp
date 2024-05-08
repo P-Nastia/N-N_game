@@ -82,8 +82,8 @@ BattleShip::BattleShip(string whoseField) {
 	}
 	for (int x = 0; x < 10; x++) {
 		for (int y = 0; y < 10; y++) {
-			if (fullField.at(x).at(y) == '4')
-				shipFor4.emplace(x, y);//вставл€ютьс€ координати корабл€ на 4 кл≥тинки
+			if (fullField.at(y).at(x) == '4')
+				shipFor4.emplace(y, x);//вставл€ютьс€ координати корабл€ на 4 кл≥тинки
 		}
 	}
 	loadShipFor3();//завантаженн€ координат корабл≥в на 3 кл≥тинки
@@ -231,7 +231,7 @@ bool BattleShip::checkForCompleteness(int x, int y)
 			return false;
 		}
 	}
-	if (fullField[y][x] == '3') {//€кщо корабель на 3 кл≥тинки
+	if (fullField.at(y).at(x) == '3') {//€кщо корабель на 3 кл≥тинки
 		cout << "3" << endl;
 		if (whichShip == false && firstShipFor3.empty() == true) {
 			if (firstShipFor3.empty() == true) {
@@ -345,7 +345,7 @@ void BattleShip::loadShipFor3()
 	bool wasFirstForSecond = false;//чи занеслис€ перш≥ координати дл€ другого корабл€ на 3 кл≥тинки
 	for (int x = 0; x < 10; x++) {
 		for (int y = 0; y < 10; y++) {
-			if (wasFirstTry == true && fullField[x][y] == '3') {
+			if (wasFirstTry == true && fullField.at(x).at(y) == '3') {
 				if ((xCord == x && yCord < y && count_tries_for_ship1 < 3) || (yCord == y && count_tries_for_ship1 < 3 && isFirstHorizontal == true)) {
 					firstShipFor3.emplace(x, y);
 					count_tries_for_ship1++;
@@ -363,13 +363,13 @@ void BattleShip::loadShipFor3()
 					}
 				}
 			}
-			else if (fullField[x][y] == '3' && wasFirstTry == false) {
+			else if (fullField.at(x).at(y) == '3' && wasFirstTry == false) {
 				count_tries_for_ship1++;
 				firstShipFor3.emplace(x, y);
 				xCord = x;
 				yCord = y;
 				wasFirstTry = true;
-				if (fullField[x + 1][y] == '3')
+				if (fullField.at(x + 1).at(y) == '3')
 					isFirstHorizontal = true;
 			}
 		}

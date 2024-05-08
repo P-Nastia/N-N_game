@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 
 #include <SFML/Graphics.hpp>
@@ -30,10 +31,12 @@ public:
     }
 };
 
+
+
 inline void Setup(sf::RenderWindow& window, Piece* RedPieces, Piece* WhitePieces) {
     int m = 0;
     for (int i = 0; i < 3; i++) {
-        for (int j = (int)!(i % 2); j < 8; j += 2) {
+        for (int j = (int)!(i % 2 & 1); j < 8; j += 2) {
             WhitePieces[m].isAlive = true;
             WhitePieces[m].x = j;
             WhitePieces[m].y = i;
@@ -42,16 +45,16 @@ inline void Setup(sf::RenderWindow& window, Piece* RedPieces, Piece* WhitePieces
 
     }
     m = 0;
-    for (int i = 5; i < 8; i++) {
-        for (int j = (int)(i % 2); j < 8; j += 2) {
+    for (int i = 0; i < 3; i++) {
+        for (int j = (int)(i % 2 & 1); j < 8; j += 2) {
             RedPieces[m].isAlive = true;
             RedPieces[m].x = j;
             RedPieces[m].y = 7 - i;
             m++;
         }
+
     }
 }
-
 
 inline Piece* FindPiece(int x, int y, Piece* RedPieces, Piece* WhitePieces) {
     for (int i = 0; i < 12; i++) {
@@ -67,34 +70,6 @@ inline Piece* FindPiece(int x, int y, Piece* RedPieces, Piece* WhitePieces) {
         }
     }
     return NULL;
-}
-
-inline void AIPlayer(Piece* WhitePieces, Piece* RedPieces, int& turn) {
-    // Отримуємо випадкову білу шашку
-    int randomIndex = rand() % 12;
-    Piece* selectedPiece = &WhitePieces[randomIndex];
-
-    // Отримуємо випадковий напрямок руху
-    int direction = rand() % 2 == 0 ? -1 : 1;
-
-    // Перевіряємо чи можливий рух
-    if (selectedPiece->isAlive) {
-        // Перевіряємо чи можливий рух на діагоналі
-        if (selectedPiece->x + direction >= 0 && selectedPiece->x + direction < 8 && selectedPiece->y + 1 >= 0 && selectedPiece->y + 1 < 8) {
-            // Перевіряємо чи в цій позиції немає іншої шашки
-            if (!FindPiece(selectedPiece->x + direction, selectedPiece->y + 1, RedPieces, WhitePieces)) {
-                // Рухаємо шашку
-                selectedPiece->x += direction;
-                selectedPiece->y += 1;
-                // Зміна ходу
-                turn = (turn == 1) ? 2 : 1;
-                return;
-            }
-        }
-    }
-
-    // Якщо не можливий жоден рух, AI пропускає хід
-    turn = (turn == 1) ? 2 : 1;
 }
 
 inline void KillPiece(int x, int y, Piece* RedPieces, Piece* WhitePieces, int* turn) {
