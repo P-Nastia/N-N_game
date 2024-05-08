@@ -2176,7 +2176,8 @@ void ClientCode(RenderWindow& mainWindow, int width, int height)
     ::Context* context = new ::Context();
     Vector2u size = mainWindow.getSize();
     if (size.x < 1920 && size.y < 1080) {
-        mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
+        //mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
+        mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu",Style::Fullscreen);
     }
     RectangleShape mainBackground(Vector2f(width, height));//фон меню
     Texture windowTexture;
@@ -2236,7 +2237,8 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     RenderWindow mainWindow;
-    mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
+    //mainWindow.create(VideoMode(1920,1080), "Minimetropolis menu");
+    mainWindow.create(VideoMode::getDesktopMode(), "Minimetropolis menu", Style::Fullscreen);
     float width = VideoMode::getDesktopMode().width;//ширина екрана
     float height = VideoMode::getDesktopMode().height;//висота екрана
     ClientCode(mainWindow, width, height);
